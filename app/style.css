@@ -1,0 +1,430 @@
+body{
+  margin:0;
+  font-family:"Arial", sans-serif;
+  background:linear-gradient(180deg,#b9ecff 0%,#fff8dc 100%);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.screen{
+  display:none;
+  width:92%;
+  max-width:430px;
+  min-height:85vh;
+  background:rgba(255,255,255,0.95);
+  padding:24px;
+  border-radius:28px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.15);
+  text-align:center;
+  position:relative;
+  padding-bottom:90px;
+  overflow-y:auto;
+}
+
+.screen.active{
+  display:block;
+}
+
+h1{
+  color:#ff7b54;
+  font-size:32px;
+  margin-bottom:18px;
+}
+
+h2{
+  margin:8px 0;
+}
+
+p{
+  line-height:1.7;
+}
+
+.card{
+  background:#fff4c7;
+  padding:20px;
+  border-radius:22px;
+  margin:18px 0;
+  box-shadow:inset 0 0 0 2px rgba(255,190,80,0.25);
+}
+
+button{
+  padding:15px;
+  border:none;
+  border-radius:18px;
+  background:linear-gradient(180deg,#ffc85c,#ff9f43);
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 5px 0 #d97b1f;
+}
+
+button:active{
+  transform:translateY(3px);
+  box-shadow:0 2px 0 #d97b1f;
+}
+
+input,
+select{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  margin-top:14px;
+  border-radius:14px;
+  border:2px solid #ffe0a3;
+  font-size:16px;
+}
+
+.menu-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:22px;
+}
+
+.bottom-nav{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:4px;
+  position:fixed;
+  left:10px;
+  right:10px;
+  bottom:10px;
+  background:#fff7df;
+  border-radius:18px;
+  padding:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  z-index:1000;
+}
+
+.bottom-nav button{
+  font-size:12px;
+  padding:8px 4px;
+  border-radius:12px;
+  box-shadow:none;
+}
+
+.balance{
+  font-size:34px;
+  font-weight:bold;
+}
+
+.badge{
+  display:inline-block;
+  background:#7bd88f;
+  color:white;
+  padding:6px 12px;
+  border-radius:999px;
+  font-weight:bold;
+}
+
+.passbook-area{
+  margin-top:20px;
+  background:#fffdf4;
+  border-radius:20px;
+  overflow:hidden;
+  border:2px solid #e8dcc2;
+}
+
+.passbook-header{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  background:#f3e6c8;
+  padding:12px;
+  font-weight:bold;
+  font-size:14px;
+  border-bottom:2px solid #e2d4b2;
+}
+
+.passbook-row{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  padding:14px 10px;
+  border-bottom:1px dashed #ddd;
+  align-items:center;
+  font-size:14px;
+  background:#fffef9;
+}
+
+.passbook-row.income{
+  color:#1d9d52;
+}
+
+.passbook-row.expense{
+  color:#d9534f;
+}
+
+.passbook-row:nth-child(even){
+  background:#fff9ea;
+}
+
+.passbook-top{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  align-items:start;
+}
+
+.passbook-top .card{
+  margin:0;
+  padding:14px;
+}
+
+.passbook-top h2{
+  font-size:16px;
+}
+
+.passbook-top .balance{
+  font-size:24px;
+}
+
+.passbook-top button{
+  margin-top:8px;
+  padding:10px;
+  font-size:14px;
+}
+
+.passbook-area{
+  margin-top:16px;
+  background:#fffdf4;
+  border-radius:20px;
+  border:2px solid #e8dcc2;
+  overflow:hidden;
+  max-height:330px;
+  display:flex;
+  flex-direction:column;
+}
+
+#transaction-list{
+  overflow-y:auto;
+  max-height:270px;
+}
+
+.sub-title{
+  margin-top:-10px;
+  margin-bottom:20px;
+  color:#888;
+  font-size:14px;
+}
+
+.balance-card{
+  background:linear-gradient(135deg,#c7f0ff,#eafcff);
+  border-radius:24px;
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.balance-label{
+  font-size:14px;
+  color:#666;
+}
+
+.balance{
+  font-size:34px;
+  font-weight:bold;
+  margin-top:8px;
+}
+
+.rank-badge{
+  background:#ffcc66;
+  color:white;
+  padding:10px 16px;
+  border-radius:999px;
+  font-weight:bold;
+  font-size:14px;
+}
+
+.transaction-card{
+  background:#fff7df;
+  border-radius:24px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.transaction-card h2{
+  margin-top:0;
+  margin-bottom:12px;
+}
+
+.trade-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+
+.trade-buttons button{
+  flex:1;
+}
+
+.income-btn{
+  background:linear-gradient(180deg,#7adf8b,#36b95d);
+  box-shadow:0 4px 0 #23813f;
+}
+
+.expense-btn{
+  background:linear-gradient(180deg,#ff9f9f,#e85b5b);
+  box-shadow:0 4px 0 #b63f3f;
+}
+
+.passbook-area{
+  background:#fffdf4;
+  border-radius:22px;
+  overflow:hidden;
+  border:2px solid #eadcb8;
+  display:flex;
+  flex-direction:column;
+  max-height:380px;
+}
+
+.passbook-title{
+  background:#e8dcc0;
+  padding:10px;
+  font-weight:bold;
+  text-align:center;
+  letter-spacing:2px;
+  color:#7a6542;
+  border-bottom:2px solid #d8c8a2;
+}
+
+.passbook-header{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  background:#f5ecd4;
+  padding:12px;
+  font-weight:bold;
+  border-bottom:1px solid #ddd;
+}
+
+#transaction-list{
+  overflow-y:auto;
+  max-height:300px;
+}
+
+.passbook-row{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  padding:12px;
+  align-items:center;
+  border-bottom:1px dashed #ddd;
+  background:#fffef8;
+  font-size:14px;
+}
+
+.passbook-row:nth-child(even){
+  background:#fff9ea;
+}
+
+.passbook-row.income{
+  color:#1c9c50;
+}
+
+.passbook-row.expense{
+  color:#e25555;
+}
+
+.mission-card{
+  display:grid;
+  grid-template-columns:50px 1fr 90px;
+  gap:10px;
+  align-items:center;
+  background:#fff7df;
+  border-radius:20px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.mission-icon{
+  font-size:34px;
+}
+
+.mission-info{
+  text-align:left;
+}
+
+.mission-info h2{
+  margin:0 0 6px 0;
+  font-size:18px;
+}
+
+.mission-info p{
+  margin:2px 0;
+  font-size:13px;
+}
+
+.mission-card button{
+  font-size:13px;
+  padding:10px 6px;
+}
+
+.approval-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#fff7df;
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.approval-card h2{
+  margin:0;
+  font-size:18px;
+}
+
+.approval-card p{
+  margin:6px 0 0 0;
+  font-size:14px;
+}
+
+.approval-date{
+  color:#777;
+  font-size:12px;
+}
+
+.goal-world{
+  background:linear-gradient(180deg,#dfffd6,#fff7d6);
+  border-radius:28px;
+  padding:28px 20px;
+  margin-bottom:18px;
+  box-shadow:0 6px 14px rgba(0,0,0,0.1);
+}
+
+.goal-icon{
+  font-size:72px;
+  margin-bottom:10px;
+}
+
+.goal-world h2{
+  margin:8px 0;
+  color:#4fa95f;
+}
+
+#goal-message{
+  color:#666;
+  font-size:14px;
+}
+
+.progress-bar{
+  width:100%;
+  height:24px;
+  background:#eee;
+  border-radius:999px;
+  overflow:hidden;
+  margin:16px 0;
+}
+
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#7bd88f,#ffd166);
+  border-radius:999px;
+  transition:width 0.4s ease;
+}

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dream Bank</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- プライバシー案内 -->
+  <section id="privacy-screen" class="screen active">
+    <h1>Dream Bankへようこそ</h1>
+
+    <p>
+      ・家族ごとにデータは分離されます<br>
+      ・相場以外は他家族へ共有されません<br>
+      ・安心してご利用いただけます
+    </p>
+
+    <button onclick="showScreen('family-screen')">
+      子供銀行を作成
+    </button>
+  </section>
+
+  <!-- 子供銀行作成 -->
+  <section id="family-screen" class="screen">
+
+    <h1>子供銀行作成</h1>
+
+    <input type="text" placeholder="家族名">
+    <input type="text" placeholder="銀行名">
+
+    <button onclick="showScreen('child-screen')">
+      次へ
+    </button>
+
+  </section>
+
+  <!-- 個人通帳作成 -->
+  <section id="child-screen" class="screen">
+
+    <h1>個人通帳作成</h1>
+
+    <input type="text" placeholder="名前">
+
+    <select>
+      <option>うさぎ</option>
+      <option>くま</option>
+      <option>ねこ</option>
+      <option>ペンギン</option>
+    </select>
+
+    <button onclick="showScreen('home-screen')">
+      通帳を作成
+    </button>
+
+  </section>
+
+  <!-- ホーム画面 -->
+  <section id="home-screen" class="screen">
+
+    <h1>Dream Bank</h1>
+
+    <div class="card">
+      <h2>現在の残高</h2>
+      <p id="home-balance" class="balance">1000 Dream円</p>
+    </div>
+
+    <div class="menu-grid">
+
+  <button onclick="showScreen('passbook-screen')">通帳</button>
+  <button onclick="showScreen('goal-screen')">目標</button>
+  <button onclick="showScreen('mission-screen')">おしごと</button>
+  <button onclick="showScreen('qr-screen')">QR</button>
+  <button onclick="showScreen('exchange-screen')">為替</button>
+  <button onclick="showScreen('setting-screen')">設定</button>
+
+    </div>
+
+  </section>
+  
+ <section id="passbook-screen" class="screen">
+
+  <h1>📖 通帳</h1>
+
+  <p class="sub-title">
+    今日もコツコツがんばろう！
+  </p>
+
+  <div class="balance-card">
+    <div>
+      <div class="balance-label">現在の残高</div>
+      <div id="balance" class="balance">
+        650 Dream円
+      </div>
+    </div>
+
+    <div class="rank-badge">
+      Bronze
+    </div>
+  </div>
+
+  <div class="transaction-card">
+
+    <h2>取引を追加</h2>
+
+    <input
+      id="trade-title"
+      type="text"
+      inputmode="kana"
+      autocomplete="off"
+      placeholder="内容を入力"
+      oninput="convertTradeTitleToHiragana()"
+    >
+
+    <input
+      id="trade-amount"
+      type="number"
+      placeholder="金額を入力"
+    >
+
+    <div class="trade-buttons">
+      <button
+        class="income-btn"
+        onclick="addTransaction('income')"
+      >
+        入金
+      </button>
+
+      <button
+        class="expense-btn"
+        onclick="addTransaction('expense')"
+      >
+        出金
+      </button>
+    </div>
+
+  </div>
+
+  <div class="passbook-area">
+
+    <div class="passbook-title">
+      Dream Bank PASSBOOK
+    </div>
+
+    <div class="passbook-header">
+      <div>年月日</div>
+      <div>お取引内容</div>
+      <div>金額</div>
+    </div>
+
+    <div id="transaction-list">
+
+      <div class="passbook-row income">
+        <div>5/22</div>
+        <div>🧹 トイレそうじ</div>
+        <div>+100円</div>
+      </div>
+
+      <div class="passbook-row expense">
+        <div>5/20</div>
+        <div>🍩 おかし</div>
+        <div>-150円</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section id="goal-screen" class="screen">
+  <h1>🎯 目標</h1>
+
+  <div class="goal-world">
+    <div id="goal-stage-icon" class="goal-icon">🌱</div>
+    <h2 id="goal-stage-title">芽が出たよ！</h2>
+    <p id="goal-message">コツコツ貯めて世界を育てよう</p>
+  </div>
+
+  <div class="card">
+    <h2>目標金額</h2>
+    <p><span id="goal-current">1000</span> / <span id="goal-target">10000</span> Dream円</p>
+
+    <div class="progress-bar">
+      <div id="goal-progress" class="progress-fill"></div>
+    </div>
+
+    <p id="goal-remaining">あと9000 Dream円で次の成長！</p>
+  </div>
+</section>
+
+<section id="mission-screen" class="screen">
+  <h1>🧹 おしごと</h1>
+
+  <div class="mission-card">
+    <div class="mission-icon">🚽</div>
+    <div class="mission-info">
+      <h2>トイレそうじ</h2>
+      <p>報酬：100 Dream円</p>
+      <p>難易度：⭐⭐</p>
+    </div>
+    <button onclick="completeMission(this)">完了した</button>
+  </div>
+
+  <div class="mission-card">
+    <div class="mission-icon">🛁</div>
+    <div class="mission-info">
+      <h2>おふろそうじ</h2>
+      <p>報酬：150 Dream円</p>
+      <p>難易度：⭐⭐⭐</p>
+    </div>
+    <button onclick="completeMission(this)">完了した</button>
+  </div>
+
+  <div class="mission-card">
+    <div class="mission-icon">👕</div>
+    <div class="mission-info">
+      <h2>せんたくをたたむ</h2>
+      <p>報酬：50 Dream円</p>
+      <p>難易度：⭐</p>
+    </div>
+    <button onclick="completeMission(this)">完了した</button>
+  </div>
+</section>
+
+<section id="qr-screen" class="screen">
+  <h1>QRスキャン</h1>
+  <div class="card">
+    <p>ここにQRコードをかざしてね</p>
+  </div>
+</section>
+
+<section id="exchange-screen" class="screen">
+  <h1>為替</h1>
+  <div class="card">
+    <p>USD 米ドル：155円</p>
+    <p>EUR ユーロ：166円</p>
+    <p>JPY 日本円：1円</p>
+  </div>
+</section>
+
+<section id="setting-screen" class="screen">
+  <h1>設定</h1>
+  <div class="card">
+    <p>家族情報</p>
+    <p>子ども情報</p>
+    <p>招待コード</p>
+  </div>
+  <div class="card">
+
+  <h2>入力モード</h2>
+
+  <select id="input-mode" onchange="changeInputMode()">
+    <option value="kana">子供モード（ひらがな）</option>
+    <option value="normal">親モード（通常）</option>
+  </select>
+
+</div>
+</section>
+
+<section id="approval-screen" class="screen">
+
+  <h1>✅ 承認待ち</h1>
+
+  <div id="approval-list">
+
+  </div>
+
+</section>
+
+  <nav class="bottom-nav">
+  <button onclick="showScreen('home-screen')">🏠<br>ホーム</button>
+  <button onclick="showScreen('passbook-screen')">📖<br>通帳</button>
+  <button onclick="showScreen('goal-screen')">🎯<br>目標</button>
+  <button onclick="showScreen('mission-screen')">🧹<br>おしごと</button>
+  <button onclick="showScreen('exchange-screen')">💱<br>為替</button>
+  <button onclick="showScreen('setting-screen')">⚙️<br>設定</button>
+  <button onclick="showScreen('approval-screen')">✅<br>承認</button>
+</nav>
+  <script src="script.js"></script>
+
+</body>
+</html>
