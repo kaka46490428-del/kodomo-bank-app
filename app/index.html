@@ -281,20 +281,49 @@
   <button onclick="showScreen('approval-screen')">✅<br>承認</button>
 </nav>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
+  import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+  }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  // Firebase設定
   const firebaseConfig = {
+
     apiKey: "AIzaSyCuHBXeOhNTOdpncmkh_t92SdhlDDQkHvM",
+
     authDomain: "kodomo-bank-app.firebaseapp.com",
+
     projectId: "kodomo-bank-app",
+
     storageBucket: "kodomo-bank-app.firebasestorage.app",
+
     messagingSenderId: "190089087052",
+
     appId: "1:190089087052:web:d9f1a31910f3f4614f8ce9"
+
   };
 
+  // Firebase初期化
   const app = initializeApp(firebaseConfig);
 
-  console.log("Firebase connected!");
+  // Firestore初期化
+  const db = getFirestore(app);
+
+  // script.jsから使えるようにする
+  window.db = db;
+  window.doc = doc;
+  window.setDoc = setDoc;
+  window.getDoc = getDoc;
+
+  console.log("Firestore connected!");
+
 </script>
 
 <script src="script.js"></script>
