@@ -247,11 +247,19 @@ if(savedMode){
 
 }
 
-loadData();
-loadDataFromFirestore();
+async function initializeAppData(){
 
-updateGoal();
-changeInputMode();
+  loadData();
+
+  await loadDataFromFirestore();
+
+  updateGoal();
+
+  changeInputMode();
+
+}
+
+initializeAppData();
 
 async function saveDataToFirestore(){
 
