@@ -1,3 +1,5 @@
+const familyId = 'takahashi-family';
+const childId = 'riku';
 function showScreen(screenId){
 
   const screens = document.querySelectorAll('.screen');
@@ -113,6 +115,8 @@ function saveData(){
     'dreamApprovals',
     document.getElementById('approval-list').innerHTML
   );
+
+  saveDataToFirestore();
 
 }
 
@@ -246,6 +250,26 @@ if(savedMode){
 loadData();
 updateGoal();
 changeInputMode();
+
+async function saveDataToFirestore(){
+
+  await window.setDoc(
+    window.doc(window.db, 'families', familyId, 'children', childId),
+    {
+      balance: balance,
+      transactionsHtml:
+        document.getElementById('transaction-list').innerHTML,
+
+      approvalsHtml:
+        document.getElementById('approval-list').innerHTML,
+
+      updatedAt: new Date().toISOString()
+    }
+  );
+
+  console.log('Firestore saved!');
+
+}
 
 function completeMission(button){
 
