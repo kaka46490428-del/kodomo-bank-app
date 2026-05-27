@@ -248,6 +248,8 @@ if(savedMode){
 }
 
 loadData();
+loadDataFromFirestore();
+
 updateGoal();
 changeInputMode();
 
