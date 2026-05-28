@@ -289,7 +289,8 @@
     getFirestore,
     doc,
     setDoc,
-    getDoc
+    getDoc,
+    onSnapshot
   }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -317,10 +318,11 @@
   const db = getFirestore(app);
 
   // script.jsから使えるようにする
-  window.db = db;
+  window.getFirestore = getFirestore;
   window.doc = doc;
   window.setDoc = setDoc;
   window.getDoc = getDoc;
+  window.onSnapshot = onSnapshot;
 
   console.log("Firestore connected!");
 

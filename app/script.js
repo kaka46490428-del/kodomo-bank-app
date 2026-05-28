@@ -257,6 +257,8 @@ async function initializeAppData(){
 
   changeInputMode();
 
+  listenRealtimeData();
+
 }
 
 initializeAppData();
@@ -498,5 +500,60 @@ async function loadDataFromFirestore(){
     console.log('Firestore loaded!');
 
   }
+
+}
+
+function listenRealtimeData(){
+
+  const docRef = window.doc(
+    window.db,
+    'families',
+    familyId,
+    'children',
+    childId
+  );
+
+  window.onSnapshot(docRef, function(docSnap){
+
+    if(docSnap.exists()){
+
+      const data = docSnap.data();
+
+      balance = data.balance || 0;
+
+      document.getElementById('balance').textContent =
+        balance + ' Dream円';
+
+      const homeBalance =
+        document.getElementById('home-balance');
+
+      if(homeBalance){
+
+        homeBalance.textContent =
+          balance + ' Dream円';
+
+      }
+
+      if(data.transactionsHtml){
+
+        document.getElementById('transaction-list').innerHTML =
+          data.transactionsHtml;
+
+      }
+
+      if(data.approvalsHtml){
+
+        document.getElementById('approval-list').innerHTML =
+          data.approvalsHtml;
+
+      }
+
+      updateGoal();
+
+      console.log('Realtime updated!');
+
+    }
+
+  });
 
 }
