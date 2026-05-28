@@ -259,7 +259,18 @@ async function initializeAppData(){
 
 }
 
-initializeAppData();
+if(window.db && window.doc){
+
+  initializeAppData();
+
+}else{
+
+  window.addEventListener(
+    'firebase-ready',
+    initializeAppData
+  );
+
+}
 
 async function saveDataToFirestore(){
 
