@@ -261,8 +261,6 @@ async function initializeAppData(){
 
 }
 
-initializeAppData();
-
 async function saveDataToFirestore(){
 
   await window.setDoc(
