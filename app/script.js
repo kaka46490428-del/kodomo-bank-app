@@ -249,8 +249,6 @@ if(savedMode){
 
 async function initializeAppData(){
 
-  loadData();
-
   await loadDataFromFirestore();
 
   updateGoal();
@@ -260,6 +258,8 @@ async function initializeAppData(){
   listenRealtimeData();
 
 }
+
+initializeAppData();
 
 async function saveDataToFirestore(){
 
@@ -526,24 +526,17 @@ function listenRealtimeData(){
         document.getElementById('home-balance');
 
       if(homeBalance){
-
-        homeBalance.textContent =
-          balance + ' Dream円';
-
+        homeBalance.textContent = balance + ' Dream円';
       }
 
       if(data.transactionsHtml){
-
         document.getElementById('transaction-list').innerHTML =
           data.transactionsHtml;
-
       }
 
       if(data.approvalsHtml){
-
         document.getElementById('approval-list').innerHTML =
           data.approvalsHtml;
-
       }
 
       updateGoal();
