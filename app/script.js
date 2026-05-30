@@ -567,3 +567,102 @@ function listenRealtimeData(){
   });
 
 }
+
+function addChildAccount(){
+
+  const input =
+    document.getElementById('child-name-input');
+
+  const name =
+    input.value.trim();
+
+  if(name === ''){
+
+    alert('こどもの名前を入力してください');
+
+    return;
+
+  }
+
+  const newChildId =
+    'child_' + Date.now();
+
+  const children =
+    JSON.parse(
+      localStorage.getItem('dreamChildren') || '[]'
+    );
+
+  children.push({
+    id: newChildId,
+    name: name
+  });
+
+  localStorage.setItem(
+    'dreamChildren',
+    JSON.stringify(children)
+  );
+
+  input.value = '';
+
+  renderChildList();
+
+}
+
+function renderChildList(){
+
+  const list =
+    document.getElementById('child-list');
+
+  if(!list){
+    return;
+  }
+
+  const children =
+    JSON.parse(
+      localStorage.getItem('dreamChildren') || '[]'
+    );
+
+  list.innerHTML = '';
+
+  children.forEach(child => {
+
+    const item =
+      document.createElement('div');
+
+    item.classList.add('child-item');
+
+    if(child.id === childId){
+      item.classList.add('active-child');
+    }
+
+    item.innerHTML = `
+      <span>${child.name}</span>
+      <button onclick="switchChildAccount('${child.id}','${child.name}')">
+        切替
+      </button>
+    `;
+
+    list.appendChild(item);
+
+  });
+
+}
+
+function switchChildAccount(id, name){
+
+  childId = id;
+  childName = name;
+
+  localStorage.setItem(
+    'dreamSelectedChildId',
+    childId
+  );
+
+  localStorage.setItem(
+    'dreamSelectedChildName',
+    childName
+  );
+
+  alert(name + 'の通帳に切り替えました');
+
+}
