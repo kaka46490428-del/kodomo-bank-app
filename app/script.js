@@ -721,13 +721,47 @@ function renderChildList(){
 
 }
 
-function switchChildAccount(id, name){
+async function switchChildAccount(id, name){
 
   childId = id;
   childName = name;
 
-  localStorage.setItem('dreamSelectedChildId', childId);
-  localStorage.setItem('dreamSelectedChildName', childName);
+  localStorage.setItem(
+    'dreamSelectedChildId',
+    childId
+  );
+
+  localStorage.setItem(
+    'dreamSelectedChildName',
+    childName
+  );
+
+  document.getElementById('transaction-list').innerHTML =
+    '';
+
+  document.getElementById('approval-list').innerHTML =
+    '';
+
+  balance = 0;
+
+  document.getElementById('balance').textContent =
+    '0 Dream円';
+
+  const homeBalance =
+    document.getElementById('home-balance');
+
+  if(homeBalance){
+
+    homeBalance.textContent =
+      '0 Dream円';
+
+  }
+
+  await loadDataFromFirestore();
+
+  updateGoal();
+
+  renderChildList();
 
   alert(name + 'の通帳に切り替えました');
 
