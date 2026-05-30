@@ -263,6 +263,8 @@ async function initializeAppData(){
 
   listenRealtimeData();
 
+  renderChildList();
+
 }
 
 if(window.db && window.doc){
