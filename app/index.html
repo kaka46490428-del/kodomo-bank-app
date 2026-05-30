@@ -253,6 +253,23 @@
 
   <h2>入力モード</h2>
 
+  <div class="card">
+  <h2>子供の通帳</h2>
+
+  <input
+    id="child-name-input"
+    type="text"
+    placeholder="こどもの名前を入力"
+  >
+
+  <button onclick="addChildAccount()">
+    通帳を追加
+  </button>
+
+  <div id="child-list" class="child-list">
+  </div>
+</div>
+
   <select id="input-mode" onchange="changeInputMode()">
     <option value="kana">子供モード（ひらがな）</option>
     <option value="normal">親モード（通常）</option>

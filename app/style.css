@@ -428,3 +428,36 @@ select{
   border-radius:999px;
   transition:width 0.4s ease;
 }
+
+.child-list{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.child-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#fff7df;
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.08);
+}
+
+.child-item.active-child{
+  background:#dfffd6;
+  border:2px solid #7bd88f;
+}
+
+.child-item span{
+  font-weight:bold;
+}
+
+.child-item button{
+  width:auto;
+  margin-top:0;
+  padding:8px 12px;
+  font-size:13px;
+}

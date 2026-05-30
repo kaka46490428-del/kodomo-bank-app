@@ -1,5 +1,11 @@
 const familyId = 'takahashi-family';
-const childId = 'riku';
+
+let childId =
+  localStorage.getItem('dreamSelectedChildId') || 'default-child';
+
+let childName =
+  localStorage.getItem('dreamSelectedChildName') || 'こども';
+  
 function showScreen(screenId){
 
   const screens = document.querySelectorAll('.screen');
