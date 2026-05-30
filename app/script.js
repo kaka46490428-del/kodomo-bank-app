@@ -20,6 +20,8 @@ function showScreen(screenId){
 
 let balance = 1000;
 
+let unsubscribeRealtime = null;
+
 function addTransaction(type){
 
   const titleInput =
@@ -522,6 +524,10 @@ async function loadDataFromFirestore(){
 
 function listenRealtimeData(){
 
+  if(unsubscribeRealtime){
+    unsubscribeRealtime();
+  }
+
   const docRef = window.doc(
     window.db,
     'families',
@@ -530,7 +536,7 @@ function listenRealtimeData(){
     childId
   );
 
-  window.onSnapshot(docRef, function(docSnap){
+  unsubscribeRealtime = window.onSnapshot(docRef, function(docSnap){
 
     if(docSnap.exists()){
 
@@ -548,63 +554,40 @@ function listenRealtimeData(){
         homeBalance.textContent = balance + ' Dream円';
       }
 
-      if(data.transactionsHtml){
-        document.getElementById('transaction-list').innerHTML =
-          data.transactionsHtml;
-      }
+      document.getElementById('transaction-list').innerHTML =
+        data.transactionsHtml || '';
 
-      if(data.approvalsHtml){
-        document.getElementById('approval-list').innerHTML =
-          data.approvalsHtml;
-      }
+      document.getElementById('approval-list').innerHTML =
+        data.approvalsHtml || '';
 
       updateGoal();
 
       console.log('Realtime updated!');
 
+    }else{
+
+      balance = 0;
+
+      document.getElementById('balance').textContent =
+        '0 Dream円';
+
+      const homeBalance =
+        document.getElementById('home-balance');
+
+      if(homeBalance){
+        homeBalance.textContent = '0 Dream円';
+      }
+
+      document.getElementById('transaction-list').innerHTML = '';
+      document.getElementById('approval-list').innerHTML = '';
+
+      updateGoal();
+
+      console.log('Realtime empty child!');
+
     }
 
   });
-
-}
-
-function addChildAccount(){
-
-  const input =
-    document.getElementById('child-name-input');
-
-  const name =
-    input.value.trim();
-
-  if(name === ''){
-
-    alert('こどもの名前を入力してください');
-
-    return;
-
-  }
-
-  const newChildId =
-    'child_' + Date.now();
-
-  const children =
-    JSON.parse(
-      localStorage.getItem('dreamChildren') || '[]'
-    );
-
-  children.push({
-    id: newChildId,
-    name: name
-  });
-
-  localStorage.setItem(
-    'dreamChildren',
-    JSON.stringify(children)
-  );
-
-  input.value = '';
-
-  renderChildList();
 
 }
 
@@ -759,9 +742,11 @@ async function switchChildAccount(id, name){
 
   await loadDataFromFirestore();
 
-  updateGoal();
+updateGoal();
 
-  renderChildList();
+listenRealtimeData();
+
+renderChildList();
 
   alert(name + 'の通帳に切り替えました');
 
