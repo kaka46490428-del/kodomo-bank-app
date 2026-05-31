@@ -603,9 +603,7 @@ function renderChildList(){
   }
 
   const children =
-    JSON.parse(
-      localStorage.getItem('dreamChildren') || '[]'
-    );
+    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
 
   list.innerHTML = '';
 
@@ -622,9 +620,20 @@ function renderChildList(){
 
     item.innerHTML = `
       <span>${child.name}</span>
-      <button onclick="switchChildAccount('${child.id}','${child.name}')">
-        切替
-      </button>
+
+      <div>
+        <button onclick="switchChildAccount('${child.id}', '${child.name}')">
+          切替
+        </button>
+
+        <button onclick="editChildAccount('${child.id}')">
+          修正
+        </button>
+
+        <button onclick="deleteChildAccount('${child.id}')">
+          削除
+        </button>
+      </div>
     `;
 
     list.appendChild(item);
@@ -797,5 +806,118 @@ async function loadChildListFromFirestore(){
     }
 
   }
+
+}
+
+function editChildAccount(id){
+
+  const children =
+    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
+
+  const child =
+    children.find(child => child.id === id);
+
+  if(!child){
+    return;
+  }
+
+  const newName =
+    prompt('新しい名前を入力してください', child.name);
+
+  if(!newName || newName.trim() === ''){
+    return;
+  }
+
+  child.name = newName.trim();
+
+  localStorage.setItem(
+    'dreamChildren',
+    JSON.stringify(children)
+  );
+
+  if(childId === id){
+    childName = child.name;
+
+    localStorage.setItem(
+      'dreamSelectedChildName',
+      childName
+    );
+  }
+
+  renderChildList();
+
+  saveChildListToFirestore();
+
+}
+
+function deleteChildAccount(id){
+
+  const children =
+    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
+
+  const child =
+    children.find(child => child.id === id);
+
+  if(!child){
+    return;
+  }
+
+  const ok =
+    confirm(child.name + 'の通帳を削除しますか？');
+
+  if(!ok){
+    return;
+  }
+
+  const filteredChildren =
+    children.filter(child => child.id !== id);
+
+  localStorage.setItem(
+    'dreamChildren',
+    JSON.stringify(filteredChildren)
+  );
+
+  if(childId === id){
+
+    childId =
+      filteredChildren[0]?.id || 'default-child';
+
+    childName =
+      filteredChildren[0]?.name || 'こども';
+
+    localStorage.setItem(
+      'dreamSelectedChildId',
+      childId
+    );
+
+    localStorage.setItem(
+      'dreamSelectedChildName',
+      childName
+    );
+
+    document.getElementById('transaction-list').innerHTML = '';
+    document.getElementById('approval-list').innerHTML = '';
+
+    balance = 0;
+
+    document.getElementById('balance').textContent =
+      '0 Dream円';
+
+    const homeBalance =
+      document.getElementById('home-balance');
+
+    if(homeBalance){
+      homeBalance.textContent = '0 Dream円';
+    }
+
+    loadDataFromFirestore();
+    listenRealtimeData();
+    updateGoal();
+
+  }
+
+  renderChildList();
+
+  saveChildListToFirestore();
 
 }
