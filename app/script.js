@@ -265,6 +265,8 @@ async function initializeAppData(){
 
   listenRealtimeData();
 
+  await loadChildListFromFirestore();
+
   renderChildList();
 
 }
@@ -663,6 +665,7 @@ function addChildAccount(){
   input.value = '';
 
   renderChildList();
+  saveChildListToFirestore();
 
 }
 
@@ -749,5 +752,50 @@ listenRealtimeData();
 renderChildList();
 
   alert(name + 'の通帳に切り替えました');
+
+}
+
+async function saveChildListToFirestore(){
+
+  const children =
+    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
+
+  await window.setDoc(
+    window.doc(window.db, 'families', familyId),
+    {
+      children: children,
+      updatedAt: new Date().toISOString()
+    }
+  );
+
+  console.log('Child list saved!');
+}
+
+async function loadChildListFromFirestore(){
+
+  const docRef =
+    window.doc(window.db, 'families', familyId);
+
+  const docSnap =
+    await window.getDoc(docRef);
+
+  if(docSnap.exists()){
+
+    const data = docSnap.data();
+
+    if(data.children){
+
+      localStorage.setItem(
+        'dreamChildren',
+        JSON.stringify(data.children)
+      );
+
+      renderChildList();
+
+      console.log('Child list loaded!');
+
+    }
+
+  }
 
 }
