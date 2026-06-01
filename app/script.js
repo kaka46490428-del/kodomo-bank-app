@@ -271,6 +271,10 @@ async function initializeAppData(){
 
   renderChildList();
 
+  await loadMissionListFromFirestore();
+
+  listenMissionListRealtime();
+
   renderMissionList();
 
 }
@@ -959,6 +963,7 @@ function addMission(){
   rewardInput.value = '';
 
   renderMissionList();
+  saveMissionListToFirestore();
 
 }
 
@@ -998,6 +1003,82 @@ function renderMissionList(){
     `;
 
     list.appendChild(item);
+
+  });
+
+}
+
+async function saveMissionListToFirestore(){
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  await window.setDoc(
+    window.doc(window.db, 'families', familyId, 'missionSettings', 'missions'),
+    {
+      missions: missions,
+      updatedAt: new Date().toISOString()
+    }
+  );
+
+  console.log('Mission list saved!');
+
+}
+
+async function loadMissionListFromFirestore(){
+
+  const docRef =
+    window.doc(window.db, 'families', familyId, 'missionSettings', 'missions');
+
+  const docSnap =
+    await window.getDoc(docRef);
+
+  if(docSnap.exists()){
+
+    const data = docSnap.data();
+
+    if(data.missions){
+
+      localStorage.setItem(
+        'dreamMissions',
+        JSON.stringify(data.missions)
+      );
+
+      renderMissionList();
+
+      console.log('Mission list loaded!');
+
+    }
+
+  }
+
+}
+
+function listenMissionListRealtime(){
+
+  const docRef =
+    window.doc(window.db, 'families', familyId, 'missionSettings', 'missions');
+
+  window.onSnapshot(docRef, function(docSnap){
+
+    if(docSnap.exists()){
+
+      const data = docSnap.data();
+
+      if(data.missions){
+
+        localStorage.setItem(
+          'dreamMissions',
+          JSON.stringify(data.missions)
+        );
+
+        renderMissionList();
+
+        console.log('Mission list realtime updated!');
+
+      }
+
+    }
 
   });
 
