@@ -271,6 +271,8 @@ async function initializeAppData(){
 
   renderChildList();
 
+  renderMissionList();
+
 }
 
 if(window.db && window.doc){
@@ -915,6 +917,87 @@ function listenChildListRealtime(){
       }
 
     }
+
+  });
+
+}
+
+function addMission(){
+
+  const nameInput =
+    document.getElementById('mission-name-input');
+
+  const rewardInput =
+    document.getElementById('mission-reward-input');
+
+  const name =
+    nameInput.value.trim();
+
+  const reward =
+    Number(rewardInput.value);
+
+  if(name === '' || reward <= 0){
+    alert('おしごと名と報酬を入力してください');
+    return;
+  }
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  missions.push({
+    id: 'mission_' + Date.now(),
+    name: name,
+    reward: reward
+  });
+
+  localStorage.setItem(
+    'dreamMissions',
+    JSON.stringify(missions)
+  );
+
+  nameInput.value = '';
+  rewardInput.value = '';
+
+  renderMissionList();
+
+}
+
+function renderMissionList(){
+
+  const list =
+    document.getElementById('mission-list');
+
+  if(!list){
+    return;
+  }
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  list.innerHTML = '';
+
+  missions.forEach(mission => {
+
+    const item =
+      document.createElement('div');
+
+    item.classList.add('mission-card');
+
+    item.innerHTML = `
+      <div class="mission-icon">⭐</div>
+
+      <div class="mission-info">
+        <h2>${mission.name}</h2>
+        <p>報酬：${mission.reward} Dream円</p>
+        <p>難易度：⭐</p>
+      </div>
+
+      <button onclick="completeMission(this)">
+        完了した
+      </button>
+    `;
+
+    list.appendChild(item);
 
   });
 
