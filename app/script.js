@@ -267,6 +267,8 @@ async function initializeAppData(){
 
   await loadChildListFromFirestore();
 
+  listenChildListRealtime();
+
   renderChildList();
 
 }
@@ -848,6 +850,8 @@ function editChildAccount(id){
 
   saveChildListToFirestore();
 
+  alert('名前を修正しました');
+
 }
 
 function deleteChildAccount(id){
@@ -919,5 +923,37 @@ function deleteChildAccount(id){
   renderChildList();
 
   saveChildListToFirestore();
+
+  alert('通帳を削除しました');
+
+}
+
+function listenChildListRealtime(){
+
+  const docRef =
+    window.doc(window.db, 'families', familyId);
+
+  window.onSnapshot(docRef, function(docSnap){
+
+    if(docSnap.exists()){
+
+      const data = docSnap.data();
+
+      if(data.children){
+
+        localStorage.setItem(
+          'dreamChildren',
+          JSON.stringify(data.children)
+        );
+
+        renderChildList();
+
+        console.log('Child list realtime updated!');
+
+      }
+
+    }
+
+  });
 
 }
