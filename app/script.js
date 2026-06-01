@@ -707,9 +707,20 @@ function renderChildList(){
 
     item.innerHTML = `
       <span>${child.name}</span>
-      <button onclick="switchChildAccount('${child.id}', '${child.name}')">
-        切替
-      </button>
+
+      <div>
+        <button onclick="switchChildAccount('${child.id}', '${child.name}')">
+          切替
+        </button>
+
+        <button onclick="editChildAccount('${child.id}')">
+          修正
+        </button>
+
+        <button onclick="deleteChildAccount('${child.id}')">
+          削除
+        </button>
+      </div>
     `;
 
     list.appendChild(item);
