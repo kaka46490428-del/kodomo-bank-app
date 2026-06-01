@@ -193,37 +193,13 @@
 </section>
 
 <section id="mission-screen" class="screen">
+
   <h1>🧹 おしごと</h1>
 
-  <div class="mission-card">
-    <div class="mission-icon">🚽</div>
-    <div class="mission-info">
-      <h2>トイレそうじ</h2>
-      <p>報酬：100 Dream円</p>
-      <p>難易度：⭐⭐</p>
-    </div>
-    <button onclick="completeMission(this)">完了した</button>
+  <div id="mission-list">
+
   </div>
 
-  <div class="mission-card">
-    <div class="mission-icon">🛁</div>
-    <div class="mission-info">
-      <h2>おふろそうじ</h2>
-      <p>報酬：150 Dream円</p>
-      <p>難易度：⭐⭐⭐</p>
-    </div>
-    <button onclick="completeMission(this)">完了した</button>
-  </div>
-
-  <div class="mission-card">
-    <div class="mission-icon">👕</div>
-    <div class="mission-info">
-      <h2>せんたくをたたむ</h2>
-      <p>報酬：50 Dream円</p>
-      <p>難易度：⭐</p>
-    </div>
-    <button onclick="completeMission(this)">完了した</button>
-  </div>
 </section>
 
 <section id="qr-screen" class="screen">
@@ -255,6 +231,28 @@
 
   <div class="card">
   <h2>子供の通帳</h2>
+
+  <div class="card">
+
+  <h2>おしごと管理</h2>
+
+  <input
+    id="mission-name-input"
+    type="text"
+    placeholder="おしごと名"
+  >
+
+  <input
+    id="mission-reward-input"
+    type="number"
+    placeholder="報酬"
+  >
+
+  <button onclick="addMission()">
+    おしごと追加
+  </button>
+
+</div>
 
   <input
     id="child-name-input"
