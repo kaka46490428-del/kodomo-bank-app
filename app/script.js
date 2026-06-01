@@ -595,55 +595,6 @@ function listenRealtimeData(){
 
 }
 
-function renderChildList(){
-
-  const list =
-    document.getElementById('child-list');
-
-  if(!list){
-    return;
-  }
-
-  const children =
-    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
-
-  list.innerHTML = '';
-
-  children.forEach(child => {
-
-    const item =
-      document.createElement('div');
-
-    item.classList.add('child-item');
-
-    if(child.id === childId){
-      item.classList.add('active-child');
-    }
-
-    item.innerHTML = `
-      <span>${child.name}</span>
-
-      <div>
-        <button onclick="switchChildAccount('${child.id}', '${child.name}')">
-          切替
-        </button>
-
-        <button onclick="editChildAccount('${child.id}')">
-          修正
-        </button>
-
-        <button onclick="deleteChildAccount('${child.id}')">
-          削除
-        </button>
-      </div>
-    `;
-
-    list.appendChild(item);
-
-  });
-
-}
-
 function addChildAccount(){
 
   const input =
