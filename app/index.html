@@ -278,34 +278,21 @@
     </button>
   </div>
 
+  <!-- 管理者画面への入口 -->
+  <div class="card">
+    <h2>管理者メニュー</h2>
+    <p>おしごとの追加・報酬変更・削除ができます（親モード専用）</p>
+    <button onclick="openAdminScreen()">
+      管理者画面を開く
+    </button>
+  </div>
+
   <div class="card">
 
   <h2>入力モード</h2>
 
   <div class="card">
   <h2>子供の通帳</h2>
-
-  <div class="card">
-
-  <h2>おしごと管理</h2>
-
-  <input
-    id="mission-name-input"
-    type="text"
-    placeholder="おしごと名"
-  >
-
-  <input
-    id="mission-reward-input"
-    type="number"
-    placeholder="報酬"
-  >
-
-  <button onclick="addMission()">
-    おしごと追加
-  </button>
-
-</div>
 
   <input
     id="child-name-input"
@@ -327,6 +314,43 @@
   </select>
 
 </div>
+</section>
+
+<section id="admin-screen" class="screen">
+
+  <h1>🛠 管理者画面</h1>
+
+  <p class="sub-title">おしごとの管理（親モード専用）</p>
+
+  <div class="card">
+    <h2>おしごと追加</h2>
+
+    <input
+      id="mission-name-input"
+      type="text"
+      placeholder="おしごと名"
+    >
+
+    <input
+      id="mission-reward-input"
+      type="number"
+      placeholder="報酬（Dream円）"
+    >
+
+    <button onclick="addMission()">
+      おしごと追加
+    </button>
+  </div>
+
+  <h2>登録済みのおしごと</h2>
+
+  <div id="admin-mission-list">
+  </div>
+
+  <button class="sub-btn" onclick="showScreen('setting-screen')">
+    設定にもどる
+  </button>
+
 </section>
 
 <section id="approval-screen" class="screen">
@@ -404,7 +428,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 </script>
 
-<script src="script.js?v=5"></script>
+<script src="script.js?v=6"></script>
 
 </body>
 </html>

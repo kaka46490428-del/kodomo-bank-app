@@ -1308,6 +1308,183 @@ function listenChildListRealtime(){
 
 }
 
+// ============================================
+// 管理者画面（親モード専用）
+// ============================================
+
+function openAdminScreen(){
+
+  const mode =
+    document.getElementById('input-mode').value;
+
+  if(mode !== 'normal'){
+    alert('管理者画面は親モードのみ開けます。\n設定の入力モードを「親モード」に切り替えてください');
+    return;
+  }
+
+  renderAdminMissionList();
+
+  showScreen('admin-screen');
+
+}
+
+function renderAdminMissionList(){
+
+  const list =
+    document.getElementById('admin-mission-list');
+
+  if(!list){
+    return;
+  }
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  list.innerHTML = '';
+
+  if(missions.length === 0){
+    list.innerHTML =
+      '<p>まだおしごとがありません。<br>上のフォームから追加してください</p>';
+    return;
+  }
+
+  missions.forEach(mission => {
+
+    const item =
+      document.createElement('div');
+
+    item.classList.add('child-item');
+
+    item.innerHTML = `
+      <span>${mission.name}（${mission.reward} Dream円）</span>
+
+      <div>
+        <button onclick="editMissionName('${mission.id}')">
+          名前
+        </button>
+
+        <button onclick="editMissionReward('${mission.id}')">
+          報酬
+        </button>
+
+        <button onclick="deleteMission('${mission.id}')">
+          削除
+        </button>
+      </div>
+    `;
+
+    list.appendChild(item);
+
+  });
+
+}
+
+function editMissionName(id){
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  const mission =
+    missions.find(m => m.id === id);
+
+  if(!mission){
+    return;
+  }
+
+  const newName =
+    prompt('新しいおしごと名を入力してください', mission.name);
+
+  if(!newName || newName.trim() === ''){
+    return;
+  }
+
+  mission.name = newName.trim();
+
+  localStorage.setItem(
+    'dreamMissions',
+    JSON.stringify(missions)
+  );
+
+  renderMissionList();
+  renderAdminMissionList();
+  saveMissionListToFirestore();
+
+  alert('おしごと名を変更しました');
+
+}
+
+function editMissionReward(id){
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  const mission =
+    missions.find(m => m.id === id);
+
+  if(!mission){
+    return;
+  }
+
+  const newReward =
+    prompt('新しい報酬を入力してください（Dream円）', mission.reward);
+
+  const reward = Number(newReward);
+
+  if(!newReward || isNaN(reward) || reward <= 0){
+    alert('1以上の数字を入力してください');
+    return;
+  }
+
+  mission.reward = reward;
+
+  localStorage.setItem(
+    'dreamMissions',
+    JSON.stringify(missions)
+  );
+
+  renderMissionList();
+  renderAdminMissionList();
+  saveMissionListToFirestore();
+
+  alert('報酬を ' + reward + ' Dream円 に変更しました');
+
+}
+
+function deleteMission(id){
+
+  const missions =
+    JSON.parse(localStorage.getItem('dreamMissions') || '[]');
+
+  const mission =
+    missions.find(m => m.id === id);
+
+  if(!mission){
+    return;
+  }
+
+  const ok =
+    confirm('「' + mission.name + '」を削除しますか？');
+
+  if(!ok){
+    return;
+  }
+
+  const filtered =
+    missions.filter(m => m.id !== id);
+
+  localStorage.setItem(
+    'dreamMissions',
+    JSON.stringify(filtered)
+  );
+
+  renderMissionList();
+  renderAdminMissionList();
+  saveMissionListToFirestore();
+
+  alert('おしごとを削除しました');
+
+}
+
 function addMission(){
 
   const nameInput =
@@ -1345,6 +1522,7 @@ function addMission(){
   rewardInput.value = '';
 
   renderMissionList();
+  renderAdminMissionList();
   saveMissionListToFirestore();
 
 }
@@ -1467,6 +1645,7 @@ function listenMissionListRealtime(){
         );
 
         renderMissionList();
+        renderAdminMissionList();
 
         console.log('Mission list realtime updated!');
 
