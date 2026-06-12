@@ -1871,7 +1871,11 @@ async function startQrScan(){
   try{
 
     qrStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' }
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
     });
 
     video.srcObject = qrStream;
@@ -1944,7 +1948,10 @@ function stopQrScan(){
 
 }
 
-function scanQrLoop(){
+let qrBarcodeDetector = null;
+let qrZxingReader = null;
+
+async function scanQrLoop(){
 
   if(!qrScanning){
     return;
@@ -1956,33 +1963,94 @@ function scanQrLoop(){
   const canvas =
     document.getElementById('qr-canvas');
 
-  if(
-    video.readyState === video.HAVE_ENOUGH_DATA &&
-    typeof jsQR !== 'undefined'
-  ){
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    let result = null;
 
-    const ctx = canvas.getContext('2d');
+    // ① ネイティブのBarcodeDetector（標準カメラと同じエンジン・ECI対応）
+    if('BarcodeDetector' in window){
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      try{
 
-    const imageData =
-      ctx.getImageData(0, 0, canvas.width, canvas.height);
+        if(!qrBarcodeDetector){
+          qrBarcodeDetector =
+            new BarcodeDetector({ formats: ['qr_code'] });
+        }
 
-    const code = jsQR(
-      imageData.data,
-      imageData.width,
-      imageData.height
-    );
+        const codes =
+          await qrBarcodeDetector.detect(video);
+
+        if(codes.length > 0){
+          result = codes[0].rawValue;
+        }
+
+      }catch(e){
+        // 非対応・エラー時は次の方式へ
+      }
+
+    }
+
+    // ② ZXing（ECI対応ライブラリ）
+    if(!result && typeof ZXing !== 'undefined'){
+
+      try{
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if(!qrZxingReader){
+          qrZxingReader =
+            new ZXing.BrowserQRCodeReader();
+        }
+
+        const zxingResult =
+          qrZxingReader.decodeFromCanvas(canvas);
+
+        if(zxingResult){
+          result = zxingResult.getText();
+        }
+
+      }catch(e){
+        // 見つからない場合は例外が出るが正常（次フレームへ）
+      }
+
+    }
+
+    // ③ jsQR（最終フォールバック）
+    if(!result && typeof jsQR !== 'undefined'){
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext('2d');
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData =
+        ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const code = jsQR(
+        imageData.data,
+        imageData.width,
+        imageData.height
+      );
+
+      if(code){
+        result = code.data;
+      }
+
+    }
 
     // 連続読み取り防止（3秒クールダウン）
-    if(code && Date.now() - qrLastScanTime > 3000){
+    if(result && Date.now() - qrLastScanTime > 3000){
 
       qrLastScanTime = Date.now();
 
-      handleQrResult(code.data);
+      handleQrResult(result);
 
     }
 
