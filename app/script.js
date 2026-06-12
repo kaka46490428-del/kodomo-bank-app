@@ -155,11 +155,13 @@ async function joinFamily(){
   familyName = data.familyName || '';
   bankName = data.bankName || '';
   inviteCode = data.inviteCode || code;
+  parentPin = data.parentPin || '';
 
   localStorage.setItem('dreamFamilyId', familyId);
   localStorage.setItem('dreamFamilyName', familyName);
   localStorage.setItem('dreamBankName', bankName);
   localStorage.setItem('dreamInviteCode', inviteCode);
+  localStorage.setItem('dreamParentPin', parentPin);
 
   // 家族の子供リストを取得
   const children = data.children || [];
@@ -270,6 +272,7 @@ function leaveFamily(){
   localStorage.removeItem('dreamFamilyName');
   localStorage.removeItem('dreamBankName');
   localStorage.removeItem('dreamInviteCode');
+  localStorage.removeItem('dreamParentPin');
   localStorage.removeItem('dreamSelectedChildId');
   localStorage.removeItem('dreamSelectedChildName');
   localStorage.removeItem('dreamChildren');
@@ -596,6 +599,8 @@ async function initializeAppData(){
 
   updateFamilyInfoDisplay();
 
+  updatePinStatusDisplay();
+
 }
 
 function startApp(){
@@ -778,8 +783,32 @@ function convertTradeTitleToHiragana(){
 
 function changeInputMode(){
 
-  const mode =
-    document.getElementById('input-mode').value;
+  const modeSelect =
+    document.getElementById('input-mode');
+
+  const mode = modeSelect.value;
+
+  // 親モードへの切替はPINで保護
+  // （保存済みモードの復元時 dreamInputMode が normal の場合は確認しない）
+  const savedMode =
+    localStorage.getItem('dreamInputMode');
+
+  if(
+    mode === 'normal' &&
+    savedMode !== 'normal' &&
+    parentPin
+  ){
+
+    if(!verifyParentPin()){
+
+      // 認証失敗 → 子供モードに戻す
+      modeSelect.value = 'kana';
+
+      return;
+
+    }
+
+  }
 
   const tradeTitle =
     document.getElementById('trade-title');
@@ -1138,7 +1167,13 @@ async function loadChildListFromFirestore(){
       localStorage.setItem('dreamInviteCode', inviteCode);
     }
 
+    if(data.parentPin){
+      parentPin = data.parentPin;
+      localStorage.setItem('dreamParentPin', parentPin);
+    }
+
     updateFamilyInfoDisplay();
+    updatePinStatusDisplay();
 
     if(data.children){
 
@@ -1289,6 +1324,12 @@ function listenChildListRealtime(){
 
       const data = docSnap.data();
 
+      if(data.parentPin !== undefined){
+        parentPin = data.parentPin || '';
+        localStorage.setItem('dreamParentPin', parentPin);
+        updatePinStatusDisplay();
+      }
+
       if(data.children){
 
         localStorage.setItem(
@@ -1309,17 +1350,128 @@ function listenChildListRealtime(){
 }
 
 // ============================================
-// 管理者画面（親モード専用）
+// 親用PINコード（4桁の暗証番号）
+// ============================================
+
+let parentPin =
+  localStorage.getItem('dreamParentPin') || '';
+
+function updatePinStatusDisplay(){
+
+  const status =
+    document.getElementById('pin-status');
+
+  if(!status){
+    return;
+  }
+
+  status.textContent =
+    parentPin ? '設定済み ✅' : '未設定';
+
+}
+
+async function setParentPin(){
+
+  // すでに設定済みなら、変更前に現在のPINを確認
+  if(parentPin){
+
+    const current =
+      prompt('現在の暗証番号（4桁）を入力してください');
+
+    if(current === null){
+      return;
+    }
+
+    if(current !== parentPin){
+      alert('暗証番号が違います');
+      return;
+    }
+
+  }
+
+  const newPin =
+    prompt('新しい暗証番号（4桁の数字）を入力してください');
+
+  if(newPin === null){
+    return;
+  }
+
+  if(!/^[0-9]{4}$/.test(newPin)){
+    alert('4桁の数字で入力してください（例：1234）');
+    return;
+  }
+
+  const confirmPin =
+    prompt('確認のため、もう一度入力してください');
+
+  if(confirmPin !== newPin){
+    alert('暗証番号が一致しません。最初からやり直してください');
+    return;
+  }
+
+  parentPin = newPin;
+
+  localStorage.setItem('dreamParentPin', parentPin);
+
+  // 家族全体で共有（他の端末でも同じPINが有効になる）
+  if(familyId){
+
+    await window.setDoc(
+      window.doc(window.db, 'families', familyId),
+      {
+        parentPin: parentPin,
+        updatedAt: new Date().toISOString()
+      },
+      { merge: true }
+    );
+
+  }
+
+  updatePinStatusDisplay();
+
+  alert('暗証番号を設定しました');
+
+}
+
+function verifyParentPin(){
+
+  // PIN未設定なら通す（設定を促す）
+  if(!parentPin){
+    return true;
+  }
+
+  const input =
+    prompt('暗証番号（4桁）を入力してください');
+
+  if(input === null){
+    return false;
+  }
+
+  if(input !== parentPin){
+    alert('暗証番号が違います');
+    return false;
+  }
+
+  return true;
+
+}
+
+// ============================================
+// 管理者画面（親モード専用・PINガード付き）
 // ============================================
 
 function openAdminScreen(){
 
-  const mode =
-    document.getElementById('input-mode').value;
-
-  if(mode !== 'normal'){
-    alert('管理者画面は親モードのみ開けます。\n設定の入力モードを「親モード」に切り替えてください');
+  if(!verifyParentPin()){
     return;
+  }
+
+  if(!parentPin){
+    alert(
+      '管理者画面を開きます。\n\n' +
+      'ヒント：設定画面で暗証番号（PIN)を設定すると、\n' +
+      '子供が勝手に開けないように保護できます'
+    );
   }
 
   renderAdminMissionList();
