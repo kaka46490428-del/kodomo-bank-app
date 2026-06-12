@@ -30,6 +30,11 @@ function showScreen(screenId){
 
   document.getElementById(screenId).classList.add('active');
 
+  // QR画面から離れたらカメラを止める（電池とプライバシーのため）
+  if(screenId !== 'qr-screen' && typeof qrScanning !== 'undefined' && qrScanning){
+    stopQrScan();
+  }
+
 }
 
 let balance = 1000;
@@ -760,7 +765,18 @@ function approveMission(button, title, reward){
   updateGoal();
   saveData();
 
-  alert('承認しました！');
+  // 報酬額にいちばん近い紙幣のごほうび動画を提案
+  const video =
+    getBillVideoForAmount(reward);
+
+  const watchVideo = confirm(
+    '承認しました！🎉\n\n' +
+    'ごほうびに ' + video.label + ' のとくべつ動画をみる？'
+  );
+
+  if(watchVideo){
+    window.open(video.url, '_blank');
+  }
 
 }
 
@@ -1821,6 +1837,480 @@ function calculateExchange(){
 
   resultText.textContent =
     symbols[currency] + ' ' + converted.toFixed(2);
+
+}
+
+// ============================================
+// QR紙幣連携
+// ============================================
+
+let qrStream = null;
+let qrScanning = false;
+let qrLastScanTime = 0;
+
+async function startQrScan(){
+
+  const video =
+    document.getElementById('qr-video');
+
+  const status =
+    document.getElementById('qr-status');
+
+  const startBtn =
+    document.getElementById('qr-start-btn');
+
+  const stopBtn =
+    document.getElementById('qr-stop-btn');
+
+  if(!navigator.mediaDevices){
+    status.textContent =
+      'このブラウザはカメラに対応していません';
+    return;
+  }
+
+  try{
+
+    qrStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+
+    video.srcObject = qrStream;
+    video.style.display = 'block';
+
+    await video.play();
+
+    qrScanning = true;
+
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'block';
+
+    status.textContent =
+      'QRコードをカメラにかざしてね';
+
+    scanQrLoop();
+
+  }catch(error){
+
+    console.log('Camera error:', error);
+
+    status.textContent =
+      'カメラをきどうできませんでした。\nカメラの使用を「許可」してください';
+
+  }
+
+}
+
+function stopQrScan(){
+
+  qrScanning = false;
+
+  const video =
+    document.getElementById('qr-video');
+
+  const startBtn =
+    document.getElementById('qr-start-btn');
+
+  const stopBtn =
+    document.getElementById('qr-stop-btn');
+
+  const status =
+    document.getElementById('qr-status');
+
+  if(qrStream){
+
+    qrStream.getTracks().forEach(track => track.stop());
+
+    qrStream = null;
+
+  }
+
+  if(video){
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+
+  if(startBtn){
+    startBtn.style.display = 'block';
+  }
+
+  if(stopBtn){
+    stopBtn.style.display = 'none';
+  }
+
+  if(status){
+    status.textContent =
+      '「スキャンかいし」をおしてカメラをきどうしてね';
+  }
+
+}
+
+function scanQrLoop(){
+
+  if(!qrScanning){
+    return;
+  }
+
+  const video =
+    document.getElementById('qr-video');
+
+  const canvas =
+    document.getElementById('qr-canvas');
+
+  if(
+    video.readyState === video.HAVE_ENOUGH_DATA &&
+    typeof jsQR !== 'undefined'
+  ){
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData =
+      ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const code = jsQR(
+      imageData.data,
+      imageData.width,
+      imageData.height
+    );
+
+    // 連続読み取り防止（3秒クールダウン）
+    if(code && Date.now() - qrLastScanTime > 3000){
+
+      qrLastScanTime = Date.now();
+
+      handleQrResult(code.data);
+
+    }
+
+  }
+
+  requestAnimationFrame(scanQrLoop);
+
+}
+
+// QRの中身から金額を判別（複数形式に対応）
+
+// 印刷済みDream紙幣のQRコード対応表（動画URL → 金額）
+// ※最新の紙幣シート（2列5行版）のQR解読結果に基づく
+const DREAM_BILL_QR = {
+  'bgoU1s': { amount: 1,      label: '1円札' },
+  'bgoU5H': { amount: 5,      label: '5円札' },
+  'bgoU5l': { amount: 10,     label: '10円札' },
+  'bgoU6D': { amount: 50,     label: '50円札' },
+  'bgoU6e': { amount: 100,    label: '100円札' },
+  'bgoU74': { amount: 500,    label: '500円札' },
+  'bgoU7b': { amount: 1000,   label: '1000円札' },
+  'bgoU8R': { amount: 5000,   label: '5000円札' },
+  'bgoU7v': { amount: 5000,   label: '5000円札（旧）' },
+  'bgoU8x': { amount: 10000,  label: '10000円札' },
+  'bgoTxS': { amount: 100000, label: 'ひみつの壱拾万円札🐉✨' }
+};
+
+// Dream紙幣のQRかチェック（qrco.de の短縮コードで判別）
+function parseDreamBill(text){
+
+  const match =
+    text.match(/qrco\.de\/([A-Za-z0-9]+)/);
+
+  if(!match){
+    return null;
+  }
+
+  return DREAM_BILL_QR[match[1]] || null;
+
+}
+
+// 金額にいちばん近い紙幣の動画を探す
+// （ひみつの紙幣は除外して通常の紙幣から選ぶ）
+function getBillVideoForAmount(amount){
+
+  const bills =
+    Object.entries(DREAM_BILL_QR)
+      .filter(([code, bill]) => !bill.label.includes('ひみつ'))
+      .map(([code, bill]) => ({
+        code: code,
+        amount: bill.amount,
+        label: bill.label
+      }));
+
+  let closest = bills[0];
+
+  let minDiff =
+    Math.abs(amount - closest.amount);
+
+  bills.forEach(bill => {
+
+    const diff =
+      Math.abs(amount - bill.amount);
+
+    if(diff < minDiff){
+      minDiff = diff;
+      closest = bill;
+    }
+
+  });
+
+  return {
+    url: 'https://qrco.de/' + closest.code,
+    label: closest.label,
+    amount: closest.amount
+  };
+
+}
+
+function parseQrAmount(text){
+
+  if(!text){
+    return null;
+  }
+
+  const trimmed = text.trim();
+
+  // 形式①：数字だけ（例：100）
+  if(/^[0-9]+$/.test(trimmed)){
+    return Number(trimmed);
+  }
+
+  // 形式②：DREAM:100 / dream-100 / Dream紙幣100 など
+  const dreamMatch =
+    trimmed.match(/dream[^0-9]*([0-9]+)/i);
+
+  if(dreamMatch){
+    return Number(dreamMatch[1]);
+  }
+
+  // 形式③：JSON（例：{"amount":100}）
+  try{
+
+    const json = JSON.parse(trimmed);
+
+    if(json.amount){
+      return Number(json.amount);
+    }
+
+  }catch(e){
+    // JSONでなければ次へ
+  }
+
+  // 形式④：URLの amount パラメータ（例：?amount=100）
+  const urlMatch =
+    trimmed.match(/[?&]amount=([0-9]+)/);
+
+  if(urlMatch){
+    return Number(urlMatch[1]);
+  }
+
+  return null;
+
+}
+
+function handleQrResult(text){
+
+  const status =
+    document.getElementById('qr-status');
+
+  // ① まず印刷済みDream紙幣かチェック
+  const bill = parseDreamBill(text);
+
+  if(bill){
+
+    const ok = confirm(
+      '💴 ' + bill.label + '（' + bill.amount + ' Dream円）をよみとりました！\n承認待ちに追加しますか？'
+    );
+
+    if(!ok){
+      status.textContent =
+        'キャンセルしました。べつのQRをよみとれます';
+      return;
+    }
+
+    queueQrDeposit(bill.label, bill.amount);
+
+    status.textContent =
+      '✅ ' + bill.label + ' を承認待ちに追加しました！\n親に承認してもらうと入金されます';
+
+    return;
+
+  }
+
+  // ② 汎用形式（数字 / DREAM:100 / JSON / amount=）
+  const amount = parseQrAmount(text);
+
+  if(!amount || amount <= 0){
+
+    status.textContent =
+      'このQRコードはDream紙幣ではないみたい…\n（よみとった内容：' + text.slice(0, 30) + '）';
+
+    return;
+
+  }
+
+  const ok = confirm(
+    '💴 ' + amount + ' Dream円の紙幣をよみとりました！\n承認待ちに追加しますか？'
+  );
+
+  if(!ok){
+    status.textContent =
+      'キャンセルしました。べつのQRをよみとれます';
+    return;
+  }
+
+  queueQrDeposit('Dream紙幣', amount);
+
+  status.textContent =
+    '✅ ' + amount + ' Dream円を承認待ちに追加しました！\n親に承認してもらうと入金されます';
+
+}
+
+// QRスキャンを承認待ちに登録（親の承認後に入金される）
+function queueQrDeposit(label, amount){
+
+  const now = new Date();
+
+  const dateTime =
+    now.getFullYear() + '/' +
+    String(now.getMonth() + 1).padStart(2, '0') + '/' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0');
+
+  const approvalList =
+    document.getElementById('approval-list');
+
+  const item =
+    document.createElement('div');
+
+  item.classList.add('approval-card');
+
+  item.innerHTML = `
+  <div>
+    <h2>💴 ${label}</h2>
+    <p>${amount} Dream円</p>
+    <p class="approval-date">${dateTime} QRスキャン</p>
+  </div>
+
+  <div>
+    <button onclick="approveQrDeposit(this, '${label}', ${amount})">
+      承認
+    </button>
+
+    <button class="sub-btn" onclick="rejectApproval(this)">
+      却下
+    </button>
+  </div>
+`;
+
+  approvalList.prepend(item);
+
+  saveData();
+
+}
+
+// 承認待ちを却下（重複スキャンなどを親が取り消せる）
+function rejectApproval(button){
+
+  const ok =
+    confirm('この承認待ちを却下しますか？\n（入金されずに削除されます）');
+
+  if(!ok){
+    return;
+  }
+
+  button.closest('.approval-card').remove();
+
+  saveData();
+
+}
+
+// 親がQR入金を承認 → ここで初めて残高に反映
+function approveQrDeposit(button, label, amount){
+
+  depositFromQr(amount, label);
+
+  button.parentElement.remove();
+
+  saveData();
+
+  alert(label + '（' + amount + ' Dream円）を入金しました！');
+
+}
+
+function depositFromQr(amount, label){
+
+  balance += amount;
+
+  const balanceText =
+    document.getElementById('balance');
+
+  if(balanceText){
+    balanceText.textContent =
+      balance + ' Dream円';
+  }
+
+  const homeBalance =
+    document.getElementById('home-balance');
+
+  if(homeBalance){
+    homeBalance.textContent =
+      balance + ' Dream円';
+  }
+
+  const list =
+    document.getElementById('transaction-list');
+
+  const item =
+    document.createElement('div');
+
+  item.classList.add('passbook-row');
+  item.classList.add('income');
+
+  item.innerHTML = `
+    <div>${new Date().toLocaleDateString()}</div>
+    <div>💴 ${label || 'Dream紙幣'}</div>
+    <div>+${amount}円</div>
+  `;
+
+  list.prepend(item);
+
+  updateGoal();
+  saveData();
+
+}
+
+// 管理者画面：Dream紙幣QRの作成
+function makeQrBill(){
+
+  const amountInput =
+    document.getElementById('qr-make-amount');
+
+  const area =
+    document.getElementById('qr-bill-area');
+
+  const amount =
+    Number(amountInput.value);
+
+  if(!amount || amount <= 0){
+    alert('金額を入力してください');
+    return;
+  }
+
+  // アプリで読み取れる形式：DREAM:金額
+  const qrText = 'DREAM:' + amount;
+
+  // QR画像生成（api.qrserver.com：無料・キー不要）
+  const qrUrl =
+    'https://api.qrserver.com/v1/create-qr-code/' +
+    '?size=200x200&data=' + encodeURIComponent(qrText);
+
+  area.innerHTML = `
+    <p><strong>${amount} Dream円 の紙幣QR</strong></p>
+    <img src="${qrUrl}" alt="QR ${amount}" style="border-radius:12px; border:4px solid #ffc85c;">
+    <p>長押し（右クリック）で画像を保存して、紙幣に印刷してください</p>
+  `;
 
 }
 

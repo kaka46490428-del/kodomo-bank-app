@@ -241,10 +241,37 @@
 </section>
 
 <section id="qr-screen" class="screen">
-  <h1>QRスキャン</h1>
+  <h1>📷 QRスキャン</h1>
+
+  <p class="sub-title">Dream紙幣のQRコードをよみとって入金！</p>
+
   <div class="card">
-    <p>ここにQRコードをかざしてね</p>
+
+    <video
+      id="qr-video"
+      playsinline
+      style="width:100%; border-radius:16px; display:none;"
+    ></video>
+
+    <canvas id="qr-canvas" style="display:none;"></canvas>
+
+    <p id="qr-status">「スキャンかいし」をおしてカメラをきどうしてね</p>
+
+    <button id="qr-start-btn" onclick="startQrScan()">
+      スキャンかいし
+    </button>
+
+    <button
+      id="qr-stop-btn"
+      class="sub-btn"
+      onclick="stopQrScan()"
+      style="display:none;"
+    >
+      スキャンていし
+    </button>
+
   </div>
+
 </section>
 
 <section id="exchange-screen" class="screen">
@@ -389,6 +416,23 @@
   <div id="admin-mission-list">
   </div>
 
+  <div class="card">
+    <h2>Dream紙幣QRの作成</h2>
+    <p>金額を入力すると、アプリで読み取れるQRコードを作れます。印刷して紙幣に貼ってください</p>
+
+    <input
+      id="qr-make-amount"
+      type="number"
+      placeholder="金額（Dream円）"
+    >
+
+    <button onclick="makeQrBill()">
+      QRコードを作成
+    </button>
+
+    <div id="qr-bill-area" style="margin-top:14px;"></div>
+  </div>
+
   <button class="sub-btn" onclick="showScreen('setting-screen')">
     設定にもどる
   </button>
@@ -470,7 +514,8 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 </script>
 
-<script src="script.js?v=10"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="script.js?v=15"></script>
 
 </body>
 </html>
