@@ -248,11 +248,46 @@
 </section>
 
 <section id="exchange-screen" class="screen">
-  <h1>為替</h1>
+  <h1>💱 為替</h1>
+
+  <p class="sub-title">せかいのお金とくらべてみよう！</p>
+
   <div class="card">
-    <p>USD 米ドル：155円</p>
-    <p>EUR ユーロ：166円</p>
-    <p>JPY 日本円：1円</p>
+    <p id="exchange-updated">レートを読み込み中...</p>
+
+    <div id="exchange-list">
+      <p>🇺🇸 USD 米ドル：--- 円</p>
+      <p>🇪🇺 EUR ユーロ：--- 円</p>
+      <p>🇬🇧 GBP ポンド：--- 円</p>
+      <p>🇯🇵 JPY 日本円：1円</p>
+    </div>
+
+    <button onclick="loadExchangeRates()">
+      さいしんのレートにこうしん
+    </button>
+  </div>
+
+  <div class="card">
+    <h2>りょうがえ けいさん</h2>
+    <p>Dream円をがいこくのお金にすると？</p>
+
+    <input
+      id="exchange-amount"
+      type="number"
+      placeholder="Dream円を入力"
+    >
+
+    <select id="exchange-currency">
+      <option value="USD">🇺🇸 米ドル（USD）</option>
+      <option value="EUR">🇪🇺 ユーロ（EUR）</option>
+      <option value="GBP">🇬🇧 ポンド（GBP）</option>
+    </select>
+
+    <button onclick="calculateExchange()">
+      けいさんする
+    </button>
+
+    <p id="exchange-result" class="balance"></p>
   </div>
 </section>
 
@@ -435,7 +470,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 </script>
 
-<script src="script.js?v=8"></script>
+<script src="script.js?v=9"></script>
 
 </body>
 </html>

@@ -601,6 +601,8 @@ async function initializeAppData(){
 
   updatePinStatusDisplay();
 
+  loadExchangeRates();
+
 }
 
 function startApp(){
@@ -1652,6 +1654,131 @@ function deleteMission(id){
   saveMissionListToFirestore();
 
   alert('おしごとを削除しました');
+
+}
+
+// ============================================
+// 為替（実相場連動）
+// ============================================
+
+// 取得失敗時のフォールバック値
+let exchangeRates = {
+  USD: 155,
+  EUR: 166,
+  GBP: 195
+};
+
+let exchangeLoaded = false;
+
+async function loadExchangeRates(){
+
+  const updatedText =
+    document.getElementById('exchange-updated');
+
+  if(updatedText){
+    updatedText.textContent = 'レートを読み込み中...';
+  }
+
+  try{
+
+    // Frankfurter API（無料・キー不要・欧州中央銀行のレート）
+    const response = await fetch(
+      'https://api.frankfurter.app/latest?from=JPY&to=USD,EUR,GBP'
+    );
+
+    if(!response.ok){
+      throw new Error('API error');
+    }
+
+    const data = await response.json();
+
+    // JPY基準のレートを「1外貨＝何円」に変換
+    exchangeRates.USD = 1 / data.rates.USD;
+    exchangeRates.EUR = 1 / data.rates.EUR;
+    exchangeRates.GBP = 1 / data.rates.GBP;
+
+    exchangeLoaded = true;
+
+    renderExchangeRates(data.date);
+
+    console.log('Exchange rates loaded!');
+
+  }catch(error){
+
+    console.log('Exchange rate fetch failed. Using fallback.', error);
+
+    renderExchangeRates(null);
+
+  }
+
+}
+
+function renderExchangeRates(date){
+
+  const list =
+    document.getElementById('exchange-list');
+
+  const updatedText =
+    document.getElementById('exchange-updated');
+
+  if(!list){
+    return;
+  }
+
+  list.innerHTML = `
+    <p>🇺🇸 USD 米ドル：${exchangeRates.USD.toFixed(2)} 円</p>
+    <p>🇪🇺 EUR ユーロ：${exchangeRates.EUR.toFixed(2)} 円</p>
+    <p>🇬🇧 GBP ポンド：${exchangeRates.GBP.toFixed(2)} 円</p>
+    <p>🇯🇵 JPY 日本円：1円</p>
+  `;
+
+  if(updatedText){
+
+    if(exchangeLoaded && date){
+      updatedText.textContent =
+        '📅 ' + date + ' のレート（1 Dream円 = 1円）';
+    }else{
+      updatedText.textContent =
+        '⚠️ さいしんのレートが取れなかったので、めやすの値を表示しています';
+    }
+
+  }
+
+}
+
+function calculateExchange(){
+
+  const amountInput =
+    document.getElementById('exchange-amount');
+
+  const currencySelect =
+    document.getElementById('exchange-currency');
+
+  const resultText =
+    document.getElementById('exchange-result');
+
+  const amount =
+    Number(amountInput.value);
+
+  if(!amount || amount <= 0){
+    alert('Dream円を入力してください');
+    return;
+  }
+
+  const currency = currencySelect.value;
+
+  const rate = exchangeRates[currency];
+
+  const converted = amount / rate;
+
+  const symbols = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£'
+  };
+
+  resultText.textContent =
+    symbols[currency] + ' ' + converted.toFixed(2);
 
 }
 
