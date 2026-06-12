@@ -2301,6 +2301,9 @@ function handleQrResult(text){
       '💴 ' + bill.label + '（' + bill.amount + ' Dream円）をよみとりました！\n承認待ちに追加しますか？'
     );
 
+    // ダイアログ中に経過した時間でも再検出しないようリセット
+    qrLastScanTime = Date.now();
+
     if(!ok){
       status.textContent =
         'キャンセルしました。べつのQRをよみとれます';
@@ -2309,8 +2312,11 @@ function handleQrResult(text){
 
     queueQrDeposit(bill.label, bill.amount);
 
+    // 同じ紙幣を再検出しないようスキャンを自動停止
+    stopQrScan();
+
     status.textContent =
-      '✅ ' + bill.label + ' を承認待ちに追加しました！\n親に承認してもらうと入金されます';
+      '✅ ' + bill.label + ' を承認待ちに追加しました！\n親に承認してもらうと入金されます。\nつづけてよみとるには「スキャンかいし」をおしてね';
 
     return;
 
@@ -2332,6 +2338,8 @@ function handleQrResult(text){
     '💴 ' + amount + ' Dream円の紙幣をよみとりました！\n承認待ちに追加しますか？'
   );
 
+  qrLastScanTime = Date.now();
+
   if(!ok){
     status.textContent =
       'キャンセルしました。べつのQRをよみとれます';
@@ -2340,8 +2348,10 @@ function handleQrResult(text){
 
   queueQrDeposit('Dream紙幣', amount);
 
+  stopQrScan();
+
   status.textContent =
-    '✅ ' + amount + ' Dream円を承認待ちに追加しました！\n親に承認してもらうと入金されます';
+    '✅ ' + amount + ' Dream円を承認待ちに追加しました！\n親に承認してもらうと入金されます。\nつづけてよみとるには「スキャンかいし」をおしてね';
 
 }
 
