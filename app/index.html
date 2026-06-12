@@ -270,6 +270,23 @@
       スキャンていし
     </button>
 
+    <input
+      id="qr-photo-input"
+      type="file"
+      accept="image/*"
+      capture="environment"
+      style="display:none;"
+      onchange="scanQrFromPhoto(this)"
+    >
+
+    <button onclick="document.getElementById('qr-photo-input').click()">
+      📸 しゃしんでよみとる
+    </button>
+
+    <p style="font-size:13px; color:#888;">
+      スキャンでよみとれないときは「しゃしんでよみとる」をためしてね
+    </p>
+
   </div>
 
 </section>
@@ -516,7 +533,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
-<script src="script.js?v=16"></script>
+<script src="script.js?v=17"></script>
 
 </body>
 </html>

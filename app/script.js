@@ -1949,7 +1949,54 @@ function stopQrScan(){
 }
 
 let qrBarcodeDetector = null;
-let qrZxingReader = null;
+
+// ZXingの低レベルAPIでcanvasを解読（ECI対応・確実に動く方式）
+function decodeCanvasWithZXing(canvas){
+
+  if(typeof ZXing === 'undefined'){
+    return null;
+  }
+
+  try{
+
+    const luminance =
+      new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+
+    const binaryBitmap =
+      new ZXing.BinaryBitmap(
+        new ZXing.HybridBinarizer(luminance)
+      );
+
+    const hints = new Map();
+
+    hints.set(
+      ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      [ZXing.BarcodeFormat.QR_CODE]
+    );
+
+    hints.set(
+      ZXing.DecodeHintType.TRY_HARDER,
+      true
+    );
+
+    const reader =
+      new ZXing.MultiFormatReader();
+
+    reader.setHints(hints);
+
+    const result =
+      reader.decode(binaryBitmap);
+
+    return result ? result.getText() : null;
+
+  }catch(e){
+
+    // NotFoundException は「このフレームに無い」だけなので正常
+    return null;
+
+  }
+
+}
 
 async function scanQrLoop(){
 
@@ -1990,38 +2037,8 @@ async function scanQrLoop(){
 
     }
 
-    // ② ZXing（ECI対応ライブラリ）
-    if(!result && typeof ZXing !== 'undefined'){
-
-      try{
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const ctx = canvas.getContext('2d');
-
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        if(!qrZxingReader){
-          qrZxingReader =
-            new ZXing.BrowserQRCodeReader();
-        }
-
-        const zxingResult =
-          qrZxingReader.decodeFromCanvas(canvas);
-
-        if(zxingResult){
-          result = zxingResult.getText();
-        }
-
-      }catch(e){
-        // 見つからない場合は例外が出るが正常（次フレームへ）
-      }
-
-    }
-
-    // ③ jsQR（最終フォールバック）
-    if(!result && typeof jsQR !== 'undefined'){
+    // ② ZXing（ECI対応ライブラリ・低レベルAPI）
+    if(!result){
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -2029,6 +2046,15 @@ async function scanQrLoop(){
       const ctx = canvas.getContext('2d');
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      result = decodeCanvasWithZXing(canvas);
+
+    }
+
+    // ③ jsQR（最終フォールバック）
+    if(!result && typeof jsQR !== 'undefined'){
+
+      const ctx = canvas.getContext('2d');
 
       const imageData =
         ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -2057,6 +2083,91 @@ async function scanQrLoop(){
   }
 
   requestAnimationFrame(scanQrLoop);
+
+}
+
+// 写真撮影でのQR読み取り（カメラアプリのオートフォーカスが使える確実な方式）
+function scanQrFromPhoto(input){
+
+  const status =
+    document.getElementById('qr-status');
+
+  const file = input.files[0];
+
+  if(!file){
+    return;
+  }
+
+  status.textContent =
+    'しゃしんをかいせき中...';
+
+  const img = new Image();
+
+  img.onload = function(){
+
+    const canvas =
+      document.getElementById('qr-canvas');
+
+    // 大きすぎる写真は縮小しながら複数サイズで試す
+    const sizes = [1600, 1000, 2400, 600];
+
+    let result = null;
+
+    for(const maxSize of sizes){
+
+      const scale =
+        Math.min(1, maxSize / Math.max(img.width, img.height));
+
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext('2d');
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // ZXing → jsQR の順に試す
+      result = decodeCanvasWithZXing(canvas);
+
+      if(!result && typeof jsQR !== 'undefined'){
+
+        const imageData =
+          ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        const code = jsQR(
+          imageData.data,
+          imageData.width,
+          imageData.height
+        );
+
+        if(code){
+          result = code.data;
+        }
+
+      }
+
+      if(result){
+        break;
+      }
+
+    }
+
+    if(result){
+
+      handleQrResult(result);
+
+    }else{
+
+      status.textContent =
+        'しゃしんからQRをみつけられませんでした。\nQRが大きくはっきりうつるように、もういちどさつえいしてね';
+
+    }
+
+    // 同じ写真をもう一度選べるようにリセット
+    input.value = '';
+
+  };
+
+  img.src = URL.createObjectURL(file);
 
 }
 
