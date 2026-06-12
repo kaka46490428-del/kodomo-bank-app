@@ -1,11 +1,25 @@
-const familyId = 'takahashi-family';
+// ============================================
+// 家族ID（招待コード対応：固定 → localStorage）
+// ============================================
+
+let familyId =
+  localStorage.getItem('dreamFamilyId') || null;
+
+let familyName =
+  localStorage.getItem('dreamFamilyName') || '';
+
+let bankName =
+  localStorage.getItem('dreamBankName') || '';
+
+let inviteCode =
+  localStorage.getItem('dreamInviteCode') || '';
 
 let childId =
   localStorage.getItem('dreamSelectedChildId') || 'default-child';
 
 let childName =
   localStorage.getItem('dreamSelectedChildName') || 'こども';
-  
+
 function showScreen(screenId){
 
   const screens = document.querySelectorAll('.screen');
@@ -21,6 +35,303 @@ function showScreen(screenId){
 let balance = 1000;
 
 let unsubscribeRealtime = null;
+
+// ============================================
+// 招待コード生成（紛らわしい文字 0/O/1/I を除外）
+// ============================================
+
+function generateInviteCode(){
+
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  let code = '';
+
+  for(let i = 0; i < 6; i++){
+
+    code += chars.charAt(
+      Math.floor(Math.random() * chars.length)
+    );
+
+  }
+
+  return code;
+
+}
+
+// ============================================
+// 子供銀行（家族）を新規作成
+// ============================================
+
+async function createFamily(){
+
+  const familyNameInput =
+    document.getElementById('family-name-input');
+
+  const bankNameInput =
+    document.getElementById('bank-name-input');
+
+  const newFamilyName =
+    familyNameInput.value.trim();
+
+  const newBankName =
+    bankNameInput.value.trim();
+
+  if(newFamilyName === '' || newBankName === ''){
+    alert('家族名と銀行名を入力してください');
+    return;
+  }
+
+  familyId = 'family_' + Date.now();
+  familyName = newFamilyName;
+  bankName = newBankName;
+  inviteCode = generateInviteCode();
+
+  await window.setDoc(
+    window.doc(window.db, 'families', familyId),
+    {
+      familyName: familyName,
+      bankName: bankName,
+      inviteCode: inviteCode,
+      children: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  );
+
+  localStorage.setItem('dreamFamilyId', familyId);
+  localStorage.setItem('dreamFamilyName', familyName);
+  localStorage.setItem('dreamBankName', bankName);
+  localStorage.setItem('dreamInviteCode', inviteCode);
+
+  // 新しい家族なので子供リストをリセット
+  localStorage.setItem('dreamChildren', '[]');
+
+  console.log('Family created! code: ' + inviteCode);
+
+  alert(
+    '子供銀行を作成しました！\n\n' +
+    '招待コード：' + inviteCode + '\n\n' +
+    '家族のスマホやPCから、このコードで参加できます\n' +
+    '（設定画面からいつでも確認できます）'
+  );
+
+  showScreen('child-screen');
+
+}
+
+// ============================================
+// 招待コードで既存の家族に参加
+// ============================================
+
+async function joinFamily(){
+
+  const codeInput =
+    document.getElementById('invite-code-input');
+
+  const code =
+    codeInput.value.trim().toUpperCase();
+
+  if(code.length !== 6){
+    alert('6文字の招待コードを入力してください');
+    return;
+  }
+
+  const q = window.query(
+    window.collection(window.db, 'families'),
+    window.where('inviteCode', '==', code)
+  );
+
+  const snapshot = await window.getDocs(q);
+
+  if(snapshot.empty){
+    alert('招待コードが見つかりません。\nコードを確認してもう一度入力してください');
+    return;
+  }
+
+  const familyDoc = snapshot.docs[0];
+  const data = familyDoc.data();
+
+  familyId = familyDoc.id;
+  familyName = data.familyName || '';
+  bankName = data.bankName || '';
+  inviteCode = data.inviteCode || code;
+
+  localStorage.setItem('dreamFamilyId', familyId);
+  localStorage.setItem('dreamFamilyName', familyName);
+  localStorage.setItem('dreamBankName', bankName);
+  localStorage.setItem('dreamInviteCode', inviteCode);
+
+  // 家族の子供リストを取得
+  const children = data.children || [];
+
+  localStorage.setItem(
+    'dreamChildren',
+    JSON.stringify(children)
+  );
+
+  // 最初の子供を選択（いなければデフォルト）
+  childId = children[0]?.id || 'default-child';
+  childName = children[0]?.name || 'こども';
+
+  localStorage.setItem('dreamSelectedChildId', childId);
+  localStorage.setItem('dreamSelectedChildName', childName);
+
+  console.log('Joined family: ' + familyId);
+
+  alert(
+    familyName + 'の' + bankName + 'に参加しました！'
+  );
+
+  codeInput.value = '';
+
+  await initializeAppData();
+
+  showScreen('home-screen');
+
+}
+
+// ============================================
+// 最初の子供通帳を作成（初回セットアップ用）
+// ============================================
+
+async function createFirstChild(){
+
+  const nameInput =
+    document.getElementById('first-child-name-input');
+
+  const animalSelect =
+    document.getElementById('first-child-animal');
+
+  const name =
+    nameInput.value.trim();
+
+  if(name === ''){
+    alert('名前を入力してください');
+    return;
+  }
+
+  const animal =
+    animalSelect ? animalSelect.value : 'うさぎ';
+
+  const newChildId =
+    'child_' + Date.now();
+
+  const children =
+    JSON.parse(localStorage.getItem('dreamChildren') || '[]');
+
+  children.push({
+    id: newChildId,
+    name: name,
+    animal: animal
+  });
+
+  localStorage.setItem(
+    'dreamChildren',
+    JSON.stringify(children)
+  );
+
+  childId = newChildId;
+  childName = name;
+
+  localStorage.setItem('dreamSelectedChildId', childId);
+  localStorage.setItem('dreamSelectedChildName', childName);
+
+  await saveChildListToFirestore();
+
+  nameInput.value = '';
+
+  await initializeAppData();
+
+  showScreen('home-screen');
+
+}
+
+// ============================================
+// ログアウト（別の家族に切り替えたい時用）
+// ============================================
+
+function leaveFamily(){
+
+  const ok = confirm(
+    'この端末から家族銀行との接続を解除しますか？\n' +
+    '（データは消えません。招待コードで再参加できます）'
+  );
+
+  if(!ok){
+    return;
+  }
+
+  if(unsubscribeRealtime){
+    unsubscribeRealtime();
+    unsubscribeRealtime = null;
+  }
+
+  localStorage.removeItem('dreamFamilyId');
+  localStorage.removeItem('dreamFamilyName');
+  localStorage.removeItem('dreamBankName');
+  localStorage.removeItem('dreamInviteCode');
+  localStorage.removeItem('dreamSelectedChildId');
+  localStorage.removeItem('dreamSelectedChildName');
+  localStorage.removeItem('dreamChildren');
+
+  familyId = null;
+
+  showScreen('privacy-screen');
+
+}
+
+// ============================================
+// 設定画面の家族情報表示を更新
+// ============================================
+
+function updateFamilyInfoDisplay(){
+
+  const familyNameText =
+    document.getElementById('setting-family-name');
+
+  const bankNameText =
+    document.getElementById('setting-bank-name');
+
+  const inviteCodeText =
+    document.getElementById('setting-invite-code');
+
+  if(familyNameText){
+    familyNameText.textContent =
+      '家族名：' + (familyName || '未設定');
+  }
+
+  if(bankNameText){
+    bankNameText.textContent =
+      '銀行名：' + (bankName || '未設定');
+  }
+
+  if(inviteCodeText){
+    inviteCodeText.textContent =
+      inviteCode || '------';
+  }
+
+}
+
+function copyInviteCode(){
+
+  if(!inviteCode){
+    alert('招待コードがありません');
+    return;
+  }
+
+  if(navigator.clipboard){
+
+    navigator.clipboard.writeText(inviteCode);
+
+    alert('招待コードをコピーしました：' + inviteCode);
+
+  }else{
+
+    alert('招待コード：' + inviteCode);
+
+  }
+
+}
 
 function addTransaction(type){
 
@@ -257,6 +568,12 @@ if(savedMode){
 
 async function initializeAppData(){
 
+  // 家族未参加の場合は初期化しない
+  if(!familyId){
+    console.log('No family yet. Waiting for setup...');
+    return;
+  }
+
   await loadDataFromFirestore();
 
   updateGoal();
@@ -277,22 +594,45 @@ async function initializeAppData(){
 
   renderMissionList();
 
+  updateFamilyInfoDisplay();
+
+}
+
+function startApp(){
+
+  if(familyId){
+
+    // 参加済み → ホーム画面へ
+    initializeAppData();
+    showScreen('home-screen');
+
+  }else{
+
+    // 未参加 → ようこそ画面のまま
+    showScreen('privacy-screen');
+
+  }
+
 }
 
 if(window.db && window.doc){
 
-  initializeAppData();
+  startApp();
 
 }else{
 
   window.addEventListener(
     'firebase-ready',
-    initializeAppData
+    startApp
   );
 
 }
 
 async function saveDataToFirestore(){
+
+  if(!familyId){
+    return;
+  }
 
   await window.setDoc(
     window.doc(window.db, 'families', familyId, 'children', childId),
@@ -483,6 +823,10 @@ function changeInputMode(){
 
 async function loadDataFromFirestore(){
 
+  if(!familyId){
+    return;
+  }
+
   const docRef = window.doc(
     window.db,
     'families',
@@ -533,6 +877,10 @@ async function loadDataFromFirestore(){
 }
 
 function listenRealtimeData(){
+
+  if(!familyId){
+    return;
+  }
 
   if(unsubscribeRealtime){
     unsubscribeRealtime();
@@ -736,21 +1084,33 @@ renderChildList();
 
 async function saveChildListToFirestore(){
 
+  if(!familyId){
+    return;
+  }
+
   const children =
     JSON.parse(localStorage.getItem('dreamChildren') || '[]');
 
   await window.setDoc(
     window.doc(window.db, 'families', familyId),
     {
+      familyName: familyName,
+      bankName: bankName,
+      inviteCode: inviteCode,
       children: children,
       updatedAt: new Date().toISOString()
-    }
+    },
+    { merge: true }
   );
 
   console.log('Child list saved!');
 }
 
 async function loadChildListFromFirestore(){
+
+  if(!familyId){
+    return;
+  }
 
   const docRef =
     window.doc(window.db, 'families', familyId);
@@ -761,6 +1121,24 @@ async function loadChildListFromFirestore(){
   if(docSnap.exists()){
 
     const data = docSnap.data();
+
+    // 家族情報も最新化
+    if(data.familyName){
+      familyName = data.familyName;
+      localStorage.setItem('dreamFamilyName', familyName);
+    }
+
+    if(data.bankName){
+      bankName = data.bankName;
+      localStorage.setItem('dreamBankName', bankName);
+    }
+
+    if(data.inviteCode){
+      inviteCode = data.inviteCode;
+      localStorage.setItem('dreamInviteCode', inviteCode);
+    }
+
+    updateFamilyInfoDisplay();
 
     if(data.children){
 
@@ -898,6 +1276,10 @@ function deleteChildAccount(id){
 
 function listenChildListRealtime(){
 
+  if(!familyId){
+    return;
+  }
+
   const docRef =
     window.doc(window.db, 'families', familyId);
 
@@ -1010,6 +1392,10 @@ function renderMissionList(){
 
 async function saveMissionListToFirestore(){
 
+  if(!familyId){
+    return;
+  }
+
   const missions =
     JSON.parse(localStorage.getItem('dreamMissions') || '[]');
 
@@ -1026,6 +1412,10 @@ async function saveMissionListToFirestore(){
 }
 
 async function loadMissionListFromFirestore(){
+
+  if(!familyId){
+    return;
+  }
 
   const docRef =
     window.doc(window.db, 'families', familyId, 'missionSettings', 'missions');
@@ -1055,6 +1445,10 @@ async function loadMissionListFromFirestore(){
 }
 
 function listenMissionListRealtime(){
+
+  if(!familyId){
+    return;
+  }
 
   const docRef =
     window.doc(window.db, 'families', familyId, 'missionSettings', 'missions');

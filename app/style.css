@@ -461,3 +461,94 @@ select{
   padding:8px 12px;
   font-size:13px;
 }
+
+/* ============================================
+   招待コード機能（追加分）
+   ============================================ */
+
+/* ようこそ画面・参加画面のボタンを縦に並べて間隔をあける */
+#privacy-screen button,
+#join-screen button,
+#family-screen button{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin-top:14px;
+}
+
+/* 「もどる」などのサブボタン（控えめな色） */
+.sub-btn,
+#join-screen button:last-child,
+#family-screen button:last-child{
+  background:linear-gradient(180deg,#e8e8e8,#c9c9c9);
+  box-shadow:0 5px 0 #a0a0a0;
+  color:#666;
+}
+
+.sub-btn:active,
+#join-screen button:last-child:active,
+#family-screen button:last-child:active{
+  box-shadow:0 2px 0 #a0a0a0;
+}
+
+/* 招待コード入力欄（大きく・等幅・中央寄せ） */
+#invite-code-input{
+  text-align:center;
+  font-size:28px;
+  font-weight:bold;
+  letter-spacing:8px;
+  font-family:"Courier New", monospace;
+  border:3px dashed #ffc85c;
+  background:#fffdf4;
+  color:#ff7b54;
+}
+
+#invite-code-input::placeholder{
+  letter-spacing:3px;
+  font-size:18px;
+  color:#d8c8a2;
+}
+
+/* 設定画面の招待コード表示 */
+#setting-invite-code{
+  font-family:"Courier New", monospace;
+  letter-spacing:6px;
+  color:#ff7b54;
+  background:#fffdf4;
+  border:3px dashed #ffc85c;
+  border-radius:16px;
+  padding:14px;
+  margin:10px 0;
+}
+
+/* 設定画面の家族情報まわりのボタン */
+#setting-screen .card button{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin-top:12px;
+}
+
+/* 接続解除ボタンは警告色 */
+#setting-screen button[onclick="leaveFamily()"]{
+  background:linear-gradient(180deg,#ff9f9f,#e85b5b);
+  box-shadow:0 5px 0 #b63f3f;
+}
+
+#setting-screen button[onclick="leaveFamily()"]:active{
+  box-shadow:0 2px 0 #b63f3f;
+}
+
+/* 招待コード説明文 */
+#setting-screen .card p{
+  font-size:13px;
+  color:#888;
+}
+
+#setting-screen .card p#setting-family-name,
+#setting-screen .card p#setting-bank-name{
+  font-size:16px;
+  color:#333;
+  font-weight:bold;
+  margin:6px 0;
+}

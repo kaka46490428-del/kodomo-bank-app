@@ -22,6 +22,40 @@
     <button onclick="showScreen('family-screen')">
       子供銀行を作成
     </button>
+
+    <button onclick="showScreen('join-screen')">
+      招待コードで参加
+    </button>
+  </section>
+
+  <!-- 招待コードで参加 -->
+  <section id="join-screen" class="screen">
+
+    <h1>招待コードで参加</h1>
+
+    <p>
+      家族から教えてもらった<br>
+      6文字の招待コードを入力してね
+    </p>
+
+    <input
+      id="invite-code-input"
+      type="text"
+      maxlength="6"
+      autocomplete="off"
+      autocapitalize="characters"
+      placeholder="例：K7X2PM"
+      style="text-transform: uppercase;"
+    >
+
+    <button onclick="joinFamily()">
+      参加する
+    </button>
+
+    <button onclick="showScreen('privacy-screen')">
+      もどる
+    </button>
+
   </section>
 
   <!-- 子供銀行作成 -->
@@ -29,11 +63,15 @@
 
     <h1>子供銀行作成</h1>
 
-    <input type="text" placeholder="家族名">
-    <input type="text" placeholder="銀行名">
+    <input id="family-name-input" type="text" placeholder="家族名">
+    <input id="bank-name-input" type="text" placeholder="銀行名">
 
-    <button onclick="showScreen('child-screen')">
+    <button onclick="createFamily()">
       次へ
+    </button>
+
+    <button onclick="showScreen('privacy-screen')">
+      もどる
     </button>
 
   </section>
@@ -43,16 +81,16 @@
 
     <h1>個人通帳作成</h1>
 
-    <input type="text" placeholder="名前">
+    <input id="first-child-name-input" type="text" placeholder="名前">
 
-    <select>
+    <select id="first-child-animal">
       <option>うさぎ</option>
       <option>くま</option>
       <option>ねこ</option>
       <option>ペンギン</option>
     </select>
 
-    <button onclick="showScreen('home-screen')">
+    <button onclick="createFirstChild()">
       通帳を作成
     </button>
 
@@ -220,11 +258,26 @@
 
 <section id="setting-screen" class="screen">
   <h1>設定</h1>
+
+  <!-- 家族情報・招待コード -->
   <div class="card">
-    <p>家族情報</p>
-    <p>子ども情報</p>
-    <p>招待コード</p>
+    <h2>家族情報</h2>
+    <p id="setting-family-name">家族名：未設定</p>
+    <p id="setting-bank-name">銀行名：未設定</p>
+
+    <h2>招待コード</h2>
+    <p id="setting-invite-code" class="balance">------</p>
+    <p>家族のスマホやPCで「招待コードで参加」からこのコードを入力すると、同じ銀行に接続できます</p>
+
+    <button onclick="copyInviteCode()">
+      コードをコピー
+    </button>
+
+    <button onclick="leaveFamily()">
+      この端末の接続を解除
+    </button>
   </div>
+
   <div class="card">
 
   <h2>入力モード</h2>
@@ -305,7 +358,11 @@
     doc,
     setDoc,
     getDoc,
-    onSnapshot
+    onSnapshot,
+    collection,
+    query,
+    where,
+    getDocs
   }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -336,6 +393,10 @@ window.doc = doc;
 window.setDoc = setDoc;
 window.getDoc = getDoc;
 window.onSnapshot = onSnapshot;
+window.collection = collection;
+window.query = query;
+window.where = where;
+window.getDocs = getDocs;
 
 console.log("Firestore connected!");
 
@@ -343,7 +404,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 </script>
 
-<script src="script.js?v=4"></script>
+<script src="script.js?v=5"></script>
 
 </body>
 </html>
