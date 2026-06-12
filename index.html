@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dream Bank</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- プライバシー案内 -->
+  <section id="privacy-screen" class="screen active">
+    <h1>Dream Bankへようこそ</h1>
+
+    <p>
+      ・家族ごとにデータは分離されます<br>
+      ・相場以外は他家族へ共有されません<br>
+      ・安心してご利用いただけます
+    </p>
+
+    <button onclick="showScreen('family-screen')">
+      子供銀行を作成
+    </button>
+
+    <button onclick="showScreen('join-screen')">
+      招待コードで参加
+    </button>
+  </section>
+
+  <!-- 招待コードで参加 -->
+  <section id="join-screen" class="screen">
+
+    <h1>招待コードで参加</h1>
+
+    <p>
+      家族から教えてもらった<br>
+      6文字の招待コードを入力してね
+    </p>
+
+    <input
+      id="invite-code-input"
+      type="text"
+      maxlength="6"
+      autocomplete="off"
+      autocapitalize="characters"
+      placeholder="例：K7X2PM"
+      style="text-transform: uppercase;"
+    >
+
+    <button onclick="joinFamily()">
+      参加する
+    </button>
+
+    <button onclick="showScreen('privacy-screen')">
+      もどる
+    </button>
+
+  </section>
+
+  <!-- 子供銀行作成 -->
+  <section id="family-screen" class="screen">
+
+    <h1>子供銀行作成</h1>
+
+    <input id="family-name-input" type="text" placeholder="家族名">
+    <input id="bank-name-input" type="text" placeholder="銀行名">
+
+    <button onclick="createFamily()">
+      次へ
+    </button>
+
+    <button onclick="showScreen('privacy-screen')">
+      もどる
+    </button>
+
+  </section>
+
+  <!-- 個人通帳作成 -->
+  <section id="child-screen" class="screen">
+
+    <h1>個人通帳作成</h1>
+
+    <input id="first-child-name-input" type="text" placeholder="名前">
+
+    <select id="first-child-animal">
+      <option>うさぎ</option>
+      <option>くま</option>
+      <option>ねこ</option>
+      <option>ペンギン</option>
+    </select>
+
+    <button onclick="createFirstChild()">
+      通帳を作成
+    </button>
+
+  </section>
+
+  <!-- ホーム画面 -->
+  <section id="home-screen" class="screen">
+
+    <h1>Dream Bank</h1>
+
+    <div class="card">
+      <h2>現在の残高</h2>
+      <p id="home-balance" class="balance">1000 Dream円</p>
+    </div>
+
+    <div class="menu-grid">
+
+  <button onclick="showScreen('passbook-screen')">通帳</button>
+  <button onclick="showScreen('goal-screen')">目標</button>
+  <button onclick="showScreen('mission-screen')">おしごと</button>
+  <button onclick="showScreen('qr-screen')">QR</button>
+  <button onclick="showScreen('exchange-screen')">為替</button>
+  <button onclick="showScreen('setting-screen')">設定</button>
+
+    </div>
+
+  </section>
+  
+ <section id="passbook-screen" class="screen">
+
+  <h1>📖 通帳</h1>
+
+  <p class="sub-title">
+    今日もコツコツがんばろう！
+  </p>
+
+  <div class="balance-card">
+    <div>
+      <div class="balance-label">現在の残高</div>
+      <div id="balance" class="balance">
+        650 Dream円
+      </div>
+    </div>
+
+    <div class="rank-badge">
+      Bronze
+    </div>
+  </div>
+
+  <div class="transaction-card">
+
+    <h2>取引を追加</h2>
+
+    <input
+      id="trade-title"
+      type="text"
+      inputmode="kana"
+      autocomplete="off"
+      placeholder="内容を入力"
+      oninput="convertTradeTitleToHiragana()"
+    >
+
+    <input
+      id="trade-amount"
+      type="number"
+      placeholder="金額を入力"
+    >
+
+    <div class="trade-buttons">
+      <button
+        class="income-btn"
+        onclick="addTransaction('income')"
+      >
+        入金
+      </button>
+
+      <button
+        class="expense-btn"
+        onclick="addTransaction('expense')"
+      >
+        出金
+      </button>
+    </div>
+
+  </div>
+
+  <div class="passbook-area">
+
+    <div class="passbook-title">
+      Dream Bank PASSBOOK
+    </div>
+
+    <div class="passbook-header">
+      <div>年月日</div>
+      <div>お取引内容</div>
+      <div>金額</div>
+    </div>
+
+    <div id="transaction-list">
+
+      <div class="passbook-row income">
+        <div>5/22</div>
+        <div>🧹 トイレそうじ</div>
+        <div>+100円</div>
+      </div>
+
+      <div class="passbook-row expense">
+        <div>5/20</div>
+        <div>🍩 おかし</div>
+        <div>-150円</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section id="goal-screen" class="screen">
+  <h1>🎯 目標</h1>
+
+  <div class="goal-world">
+    <div id="goal-stage-icon" class="goal-icon">🌱</div>
+    <h2 id="goal-stage-title">芽が出たよ！</h2>
+    <p id="goal-message">コツコツ貯めて世界を育てよう</p>
+  </div>
+
+  <div class="card">
+    <h2>目標金額</h2>
+    <p><span id="goal-current">1000</span> / <span id="goal-target">10000</span> Dream円</p>
+
+    <div class="progress-bar">
+      <div id="goal-progress" class="progress-fill"></div>
+    </div>
+
+    <p id="goal-remaining">あと9000 Dream円で次の成長！</p>
+  </div>
+</section>
+
+<section id="mission-screen" class="screen">
+
+  <h1>🧹 おしごと</h1>
+
+  <div id="mission-list">
+
+  </div>
+
+</section>
+
+<section id="qr-screen" class="screen">
+  <h1>QRスキャン</h1>
+  <div class="card">
+    <p>ここにQRコードをかざしてね</p>
+  </div>
+</section>
+
+<section id="exchange-screen" class="screen">
+  <h1>為替</h1>
+  <div class="card">
+    <p>USD 米ドル：155円</p>
+    <p>EUR ユーロ：166円</p>
+    <p>JPY 日本円：1円</p>
+  </div>
+</section>
+
+<section id="setting-screen" class="screen">
+  <h1>設定</h1>
+
+  <!-- 家族情報・招待コード -->
+  <div class="card">
+    <h2>家族情報</h2>
+    <p id="setting-family-name">家族名：未設定</p>
+    <p id="setting-bank-name">銀行名：未設定</p>
+
+    <h2>招待コード</h2>
+    <p id="setting-invite-code" class="balance">------</p>
+    <p>家族のスマホやPCで「招待コードで参加」からこのコードを入力すると、同じ銀行に接続できます</p>
+
+    <button onclick="copyInviteCode()">
+      コードをコピー
+    </button>
+
+    <button onclick="leaveFamily()">
+      この端末の接続を解除
+    </button>
+  </div>
+
+  <div class="card">
+
+  <h2>入力モード</h2>
+
+  <div class="card">
+  <h2>子供の通帳</h2>
+
+  <div class="card">
+
+  <h2>おしごと管理</h2>
+
+  <input
+    id="mission-name-input"
+    type="text"
+    placeholder="おしごと名"
+  >
+
+  <input
+    id="mission-reward-input"
+    type="number"
+    placeholder="報酬"
+  >
+
+  <button onclick="addMission()">
+    おしごと追加
+  </button>
+
+</div>
+
+  <input
+    id="child-name-input"
+    type="text"
+    placeholder="こどもの名前を入力"
+  >
+
+  <button onclick="addChildAccount()">
+    通帳を追加
+  </button>
+
+  <div id="child-list" class="child-list">
+  </div>
+</div>
+
+  <select id="input-mode" onchange="changeInputMode()">
+    <option value="kana">子供モード（ひらがな）</option>
+    <option value="normal">親モード（通常）</option>
+  </select>
+
+</div>
+</section>
+
+<section id="approval-screen" class="screen">
+
+  <h1>✅ 承認待ち</h1>
+
+  <div id="approval-list">
+
+  </div>
+
+</section>
+
+  <nav class="bottom-nav">
+  <button onclick="showScreen('home-screen')">🏠<br>ホーム</button>
+  <button onclick="showScreen('passbook-screen')">📖<br>通帳</button>
+  <button onclick="showScreen('goal-screen')">🎯<br>目標</button>
+  <button onclick="showScreen('mission-screen')">🧹<br>おしごと</button>
+  <button onclick="showScreen('exchange-screen')">💱<br>為替</button>
+  <button onclick="showScreen('setting-screen')">⚙️<br>設定</button>
+  <button onclick="showScreen('approval-screen')">✅<br>承認</button>
+</nav>
+<script type="module">
+
+  import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    onSnapshot,
+    collection,
+    query,
+    where,
+    getDocs
+  }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  // Firebase設定
+  const firebaseConfig = {
+
+    apiKey: "AIzaSyCuHBXeOhNTOdpncmkh_t92SdhlDDQkHvM",
+
+    authDomain: "kodomo-bank-app.firebaseapp.com",
+
+    projectId: "kodomo-bank-app",
+
+    storageBucket: "kodomo-bank-app.firebasestorage.app",
+
+    messagingSenderId: "190089087052",
+
+    appId: "1:190089087052:web:d9f1a31910f3f4614f8ce9"
+
+  };
+
+  // Firestore初期化
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// script.jsから使えるようにする
+window.db = db;
+window.doc = doc;
+window.setDoc = setDoc;
+window.getDoc = getDoc;
+window.onSnapshot = onSnapshot;
+window.collection = collection;
+window.query = query;
+window.where = where;
+window.getDocs = getDocs;
+
+console.log("Firestore connected!");
+
+window.dispatchEvent(new Event('firebase-ready'));
+
+</script>
+
+<script src="script.js?v=5"></script>
+
+</body>
+</html>
