@@ -1679,15 +1679,15 @@ async function loadExchangeRates(){
     updatedText.textContent = 'レートを読み込み中...';
   }
 
+  // ① メイン：Frankfurter API（欧州中央銀行のレート）
   try{
 
-    // Frankfurter API（無料・キー不要・欧州中央銀行のレート）
     const response = await fetch(
-      'https://api.frankfurter.app/latest?from=JPY&to=USD,EUR,GBP'
+      'https://api.frankfurter.dev/v1/latest?base=JPY&symbols=USD,EUR,GBP'
     );
 
     if(!response.ok){
-      throw new Error('API error');
+      throw new Error('Frankfurter API error: ' + response.status);
     }
 
     const data = await response.json();
@@ -1701,11 +1701,53 @@ async function loadExchangeRates(){
 
     renderExchangeRates(data.date);
 
-    console.log('Exchange rates loaded!');
+    console.log('Exchange rates loaded! (Frankfurter)');
+
+    return;
 
   }catch(error){
 
-    console.log('Exchange rate fetch failed. Using fallback.', error);
+    console.log('Frankfurter failed. Trying backup...', error);
+
+  }
+
+  // ② 予備：open.er-api.com（無料・キー不要）
+  try{
+
+    const response = await fetch(
+      'https://open.er-api.com/v6/latest/JPY'
+    );
+
+    if(!response.ok){
+      throw new Error('Backup API error: ' + response.status);
+    }
+
+    const data = await response.json();
+
+    if(data.result !== 'success'){
+      throw new Error('Backup API returned: ' + data.result);
+    }
+
+    exchangeRates.USD = 1 / data.rates.USD;
+    exchangeRates.EUR = 1 / data.rates.EUR;
+    exchangeRates.GBP = 1 / data.rates.GBP;
+
+    exchangeLoaded = true;
+
+    const date =
+      data.time_last_update_utc
+        ? data.time_last_update_utc.slice(0, 16)
+        : '';
+
+    renderExchangeRates(date);
+
+    console.log('Exchange rates loaded! (Backup API)');
+
+    return;
+
+  }catch(error){
+
+    console.log('Backup API also failed. Using fallback.', error);
 
     renderExchangeRates(null);
 
