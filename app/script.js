@@ -810,6 +810,12 @@ function changeInputMode(){
 
   }
 
+  // 子供モードに戻したら認証をリセット
+  // （次に親の操作をするときは再度PINが必要）
+  if(mode === 'kana'){
+    pinVerified = false;
+  }
+
   const tradeTitle =
     document.getElementById('trade-title');
 
@@ -1356,6 +1362,10 @@ function listenChildListRealtime(){
 let parentPin =
   localStorage.getItem('dreamParentPin') || '';
 
+// 一度PINを入力したら覚えておくフラグ
+// （子供モードに戻すか、ページを閉じるとリセット）
+let pinVerified = false;
+
 function updatePinStatusDisplay(){
 
   const status =
@@ -1373,7 +1383,7 @@ function updatePinStatusDisplay(){
 async function setParentPin(){
 
   // すでに設定済みなら、変更前に現在のPINを確認
-  if(parentPin){
+  if(parentPin && !pinVerified){
 
     const current =
       prompt('現在の暗証番号（4桁）を入力してください');
@@ -1440,6 +1450,11 @@ function verifyParentPin(){
     return true;
   }
 
+  // すでに認証済みなら再入力不要
+  if(pinVerified){
+    return true;
+  }
+
   const input =
     prompt('暗証番号（4桁）を入力してください');
 
@@ -1451,6 +1466,9 @@ function verifyParentPin(){
     alert('暗証番号が違います');
     return false;
   }
+
+  // 認証成功 → 覚えておく
+  pinVerified = true;
 
   return true;
 
