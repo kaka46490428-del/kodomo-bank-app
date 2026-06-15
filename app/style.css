@@ -552,3 +552,50 @@ select{
   font-weight:bold;
   margin:6px 0;
 }
+
+/* ============================================
+   おさつカメラ認証（追加分）
+   ============================================ */
+
+.billcam-frame{
+  position:absolute;
+  top:25%;
+  left:15%;
+  width:70%;
+  height:50%;
+  border:3px dashed #ff9f43;
+  border-radius:12px;
+  pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.06);
+}
+
+/* カメラ非表示時は枠も隠す */
+#billcam-video[style*="display:none"] + .billcam-frame,
+#billcam-video[style*="display: none"] + .billcam-frame{
+  display:none;
+}
+
+#billcam-status{
+  white-space:pre-line;
+  font-weight:bold;
+  color:#ff7b54;
+}
+
+/* 中央パッチ用の正方形ガイド枠 */
+.billcam-frame-square{
+  position:absolute;
+  top:25%;
+  left:50%;
+  transform:translateX(-50%);
+  width:50%;
+  aspect-ratio:1/1;
+  border:3px dashed #ff9f43;
+  border-radius:12px;
+  pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.08);
+}
+
+#billcam-video[style*="display:none"] + .billcam-frame-square,
+#billcam-video[style*="display: none"] + .billcam-frame-square{
+  display:none;
+}

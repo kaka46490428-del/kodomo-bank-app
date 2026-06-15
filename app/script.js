@@ -35,6 +35,10 @@ function showScreen(screenId){
     stopQrScan();
   }
 
+  if(screenId !== 'qr-screen' && typeof billCamScanning !== 'undefined' && billCamScanning){
+    stopBillCam();
+  }
+
 }
 
 let balance = 1000;
@@ -606,6 +610,10 @@ async function initializeAppData(){
 
   updatePinStatusDisplay();
 
+  renderBillPicker();
+
+  renderVideoLibrary();
+
   loadExchangeRates();
 
 }
@@ -765,17 +773,33 @@ function approveMission(button, title, reward){
   updateGoal();
   saveData();
 
-  // 報酬額にいちばん近い紙幣のごほうび動画を提案
-  const video =
-    getBillVideoForAmount(reward);
+  // 報酬額にいちばん近い紙幣のごほうび動画を提案（動画URL設定済みの紙幣から選ぶ）
+  const billsWithVideo =
+    DREAM_BILLS.filter(b => b.videoUrl);
 
-  const watchVideo = confirm(
-    '承認しました！🎉\n\n' +
-    'ごほうびに ' + video.label + ' のとくべつ動画をみる？'
-  );
+  if(billsWithVideo.length > 0){
 
-  if(watchVideo){
-    window.open(video.url, '_blank');
+    let closest = billsWithVideo[0];
+
+    billsWithVideo.forEach(b => {
+      if(Math.abs(reward - b.amount) < Math.abs(reward - closest.amount)){
+        closest = b;
+      }
+    });
+
+    const watchVideo = confirm(
+      '承認しました！🎉\n\n' +
+      'ごほうびに ' + closest.icon + ' ' + closest.label + ' のとくべつ動画をみる？'
+    );
+
+    if(watchVideo){
+      window.open(closest.videoUrl, '_blank');
+    }
+
+  }else{
+
+    alert('承認しました！🎉');
+
   }
 
 }
@@ -1841,8 +1865,454 @@ function calculateExchange(){
 }
 
 // ============================================
-// QR紙幣連携
+// 紙幣ピッカー：絵柄（目印）で選んで入金
+// QR不要・印刷品質に左右されない方式
 // ============================================
+
+// 紙幣の目印（最新デザインのモチーフと対応）
+// videoUrl：YouTubeにアップロードしたらここにURLを入れるだけで
+// どうがライブラリ・承認時のごほうび動画すべてに反映されます
+const DREAM_BILLS = [
+  { amount: 1,      icon: '🐰', label: '1円札（うさぎ）',                videoUrl: '' },
+  { amount: 5,      icon: '🐿️', label: '5円札（りす）',                 videoUrl: '' },
+  { amount: 10,     icon: '🏡', label: '10円札（おうち）',              videoUrl: '' },
+  { amount: 50,     icon: '🐧', label: '50円札（ペンギン）',            videoUrl: '' },
+  { amount: 100,    icon: '🐱', label: '100円札（ねこ）',               videoUrl: '' },
+  { amount: 500,    icon: '🌻', label: '500円札（ひまわり）',           videoUrl: '' },
+  { amount: 1000,   icon: '🗻', label: '1000円札（ふじさん）',          videoUrl: '' },
+  { amount: 5000,   icon: '🎡', label: '5000円札（かんらんしゃ）',      videoUrl: '' },
+  { amount: 10000,  icon: '🏰', label: '10000円札（おしろ）',           videoUrl: '' },
+  { amount: 100000, icon: '🐉', label: 'ひみつの壱拾万円札（ドラゴン）✨', videoUrl: '' }
+];
+
+// ============================================
+// おさつ画面認証（中央パッチ・3色ストライプ方式）
+// 紙幣中央の円に置いた3本の色帯で金額を判定
+// QR不要・外部サービス不要・期限なし
+// ============================================
+
+// 基本5色（はっきり区別できる色相）
+const PATCH_BASE_COLORS = {
+  R: 0,    // 赤
+  Y: 55,   // 黄
+  G: 120,  // 緑
+  B: 225,  // 青
+  P: 280   // 紫
+};
+
+// 各紙幣の3色パターン（左・中・右）
+const BILL_PATCH_PATTERNS = [
+  { amount: 1,      pattern: ['G','G','G'] },
+  { amount: 5,      pattern: ['Y','Y','Y'] },
+  { amount: 10,     pattern: ['R','R','R'] },
+  { amount: 50,     pattern: ['B','B','B'] },
+  { amount: 100,    pattern: ['P','P','P'] },
+  { amount: 500,    pattern: ['Y','R','Y'] },
+  { amount: 1000,   pattern: ['B','G','B'] },
+  { amount: 5000,   pattern: ['P','R','P'] },
+  { amount: 10000,  pattern: ['G','P','G'] },
+  { amount: 100000, pattern: ['R','P','B'] }
+];
+
+// 色相を基本色コード(R/Y/G/B/P)に分類。彩度が低すぎる=無色はnull
+function hueToBaseCode(h, s, v){
+
+  if(s < 0.3 || v < 0.25){
+    return null;
+  }
+
+  let bestCode = null;
+  let bestDiff = 999;
+
+  for(const code in PATCH_BASE_COLORS){
+
+    const target = PATCH_BASE_COLORS[code];
+
+    let diff = Math.abs(h - target);
+    if(diff > 180) diff = 360 - diff;
+
+    if(diff < bestDiff){
+      bestDiff = diff;
+      bestCode = code;
+    }
+
+  }
+
+  // 最寄りの基本色から36度以内のときだけ採用
+  return bestDiff <= 36 ? bestCode : null;
+
+}
+
+// 1つの帯領域の代表色コードを多数決で求める
+function dominantCodeOfRegion(data, w, x1, x2, y1, y2){
+
+  const counts = { R:0, Y:0, G:0, B:0, P:0 };
+
+  for(let y = y1; y < y2; y += 2){
+    for(let x = x1; x < x2; x += 2){
+
+      const i = (y * w + x) * 4;
+
+      const r = data[i] / 255;
+      const g = data[i + 1] / 255;
+      const b = data[i + 2] / 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const v = max;
+      const s = max === 0 ? 0 : (max - min) / max;
+
+      let h = 0;
+      const d = max - min;
+
+      if(d > 0){
+        if(max === r){
+          h = 60 * (((g - b) / d) % 6);
+        }else if(max === g){
+          h = 60 * ((b - r) / d + 2);
+        }else{
+          h = 60 * ((r - g) / d + 4);
+        }
+      }
+
+      if(h < 0) h += 360;
+
+      const code = hueToBaseCode(h, s, v);
+
+      if(code){
+        counts[code]++;
+      }
+
+    }
+  }
+
+  let best = null;
+  let bestCount = 0;
+  let total = 0;
+
+  for(const code in counts){
+    total += counts[code];
+    if(counts[code] > bestCount){
+      bestCount = counts[code];
+      best = code;
+    }
+  }
+
+  // その帯の過半数が同じ色でなければ無効
+  if(total < 5 || bestCount < total * 0.5){
+    return null;
+  }
+
+  return best;
+
+}
+
+// 連続フレームの投票
+let billVotes = [];
+
+function recognizeBillFrame(video, canvas){
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+
+  if(!vw || !vh){
+    return null;
+  }
+
+  // 中央の正方形エリア（パッチを映す枠）を切り出す
+  const size = Math.min(vw, vh) * 0.5;
+  const sx = (vw - size) / 2;
+  const sy = (vh - size) / 2;
+
+  canvas.width = 150;
+  canvas.height = 150;
+
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, 150, 150);
+
+  const data =
+    ctx.getImageData(0, 0, 150, 150).data;
+
+  // 中央の縦60%・横を3等分して各帯の色を読む
+  const y1 = Math.floor(150 * 0.2);
+  const y2 = Math.floor(150 * 0.8);
+
+  const left   = dominantCodeOfRegion(data, 150, 10,  45,  y1, y2);
+  const center = dominantCodeOfRegion(data, 150, 58,  92,  y1, y2);
+  const right  = dominantCodeOfRegion(data, 150, 105, 140, y1, y2);
+
+  if(!left || !center || !right){
+    billVotes = [];
+    return null;
+  }
+
+  // パターン一致を探す
+  let matched = null;
+
+  for(const bp of BILL_PATCH_PATTERNS){
+    if(bp.pattern[0] === left &&
+       bp.pattern[1] === center &&
+       bp.pattern[2] === right){
+      matched = bp.amount;
+      break;
+    }
+  }
+
+  if(matched === null){
+    billVotes = [];
+    return null;
+  }
+
+  // 投票（直近5回一致で確定）
+  billVotes.push(matched);
+
+  if(billVotes.length > 6){
+    billVotes.shift();
+  }
+
+  const count =
+    billVotes.filter(a => a === matched).length;
+
+  if(count >= 5){
+    billVotes = [];
+    return matched;
+  }
+
+  return null;
+
+}
+
+let billCamStream = null;
+let billCamScanning = false;
+
+async function startBillCam(){
+
+  const video =
+    document.getElementById('billcam-video');
+
+  const status =
+    document.getElementById('billcam-status');
+
+  const startBtn =
+    document.getElementById('billcam-start-btn');
+
+  const stopBtn =
+    document.getElementById('billcam-stop-btn');
+
+  if(!navigator.mediaDevices){
+    status.textContent =
+      'このブラウザはカメラにたいおうしていません';
+    return;
+  }
+
+  try{
+
+    billCamStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+
+    video.srcObject = billCamStream;
+    video.style.display = 'block';
+
+    await video.play();
+
+    billCamScanning = true;
+    billVotes = [];
+
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'block';
+
+    status.textContent =
+      'おさつをわくのなかにうつしてね…🔍';
+
+    billCamLoop();
+
+  }catch(error){
+
+    console.log('Bill camera error:', error);
+
+    status.textContent =
+      'カメラをきどうできませんでした。\nカメラのしようを「きょか」してください';
+
+  }
+
+}
+
+function stopBillCam(){
+
+  billCamScanning = false;
+  billVotes = [];
+
+  const video =
+    document.getElementById('billcam-video');
+
+  const startBtn =
+    document.getElementById('billcam-start-btn');
+
+  const stopBtn =
+    document.getElementById('billcam-stop-btn');
+
+  const status =
+    document.getElementById('billcam-status');
+
+  if(billCamStream){
+    billCamStream.getTracks().forEach(t => t.stop());
+    billCamStream = null;
+  }
+
+  if(video){
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+
+  if(startBtn){
+    startBtn.style.display = 'block';
+  }
+
+  if(stopBtn){
+    stopBtn.style.display = 'none';
+  }
+
+  if(status){
+    status.textContent =
+      '「おさつをうつす」をおしてカメラをきどうしてね';
+  }
+
+}
+
+function billCamLoop(){
+
+  if(!billCamScanning){
+    return;
+  }
+
+  const video =
+    document.getElementById('billcam-video');
+
+  const canvas =
+    document.getElementById('billcam-canvas');
+
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+
+    const amount =
+      recognizeBillFrame(video, canvas);
+
+    if(amount !== null){
+
+      const bill =
+        findBillByAmount(amount);
+
+      stopBillCam();
+
+      const status =
+        document.getElementById('billcam-status');
+
+      if(status){
+        status.textContent =
+          '✨ ' + bill.icon + ' ' + bill.label + ' をみつけたよ！';
+      }
+
+      // 確定 → 承認待ちへ
+      setTimeout(function(){
+        pickBill(bill);
+      }, 300);
+
+      return;
+
+    }
+
+  }
+
+  requestAnimationFrame(billCamLoop);
+
+}
+
+// 金額から紙幣情報を取得
+function findBillByAmount(amount){
+
+  return DREAM_BILLS.find(
+    bill => bill.amount === amount
+  ) || null;
+
+}
+
+// 金額に対応する動画を開く（未設定なら案内）
+function playBillVideo(amount){
+
+  const bill =
+    findBillByAmount(amount);
+
+  if(!bill){
+    return false;
+  }
+
+  if(!bill.videoUrl){
+
+    alert(
+      bill.icon + ' ' + bill.label + ' の動画はじゅんびちゅうです。\nもうすこしまっててね！'
+    );
+
+    return false;
+
+  }
+
+  window.open(bill.videoUrl, '_blank');
+
+  return true;
+
+}
+
+function renderBillPicker(){
+
+  const area =
+    document.getElementById('bill-picker');
+
+  if(!area){
+    return;
+  }
+
+  area.innerHTML = '';
+
+  DREAM_BILLS.forEach(bill => {
+
+    const btn =
+      document.createElement('button');
+
+    btn.textContent =
+      bill.icon + ' ' + bill.label;
+
+    btn.onclick = function(){
+      pickBill(bill);
+    };
+
+    area.appendChild(btn);
+
+  });
+
+}
+
+function pickBill(bill){
+
+  const ok = confirm(
+    bill.icon + ' ' + bill.label + '（' + bill.amount + ' Dream円）\n承認待ちに追加しますか？\n\n※紙幣はおうちの人にわたしてね'
+  );
+
+  if(!ok){
+    return;
+  }
+
+  queueQrDeposit(bill.icon + ' ' + bill.label, bill.amount);
+
+  alert(
+    '✅ 承認待ちに追加しました！\nおうちの人に紙幣をわたして、承認してもらおう'
+  );
+
+}
 
 let qrStream = null;
 let qrScanning = false;
@@ -2415,16 +2885,87 @@ function rejectApproval(button){
 
 }
 
+// 金額に完全一致する紙幣の動画を探す（ひみつの紙幣も含む）
+// どうがライブラリ：紙幣一覧から金額ベースで動画を再生
+function renderVideoLibrary(){
+
+  const area =
+    document.getElementById('video-library');
+
+  if(!area){
+    return;
+  }
+
+  area.innerHTML = '';
+
+  DREAM_BILLS.forEach(bill => {
+
+    const btn =
+      document.createElement('button');
+
+    btn.textContent =
+      bill.icon + ' ' + bill.label;
+
+    btn.onclick = function(){
+      playBillVideo(bill.amount);
+    };
+
+    area.appendChild(btn);
+
+  });
+
+}
+
+function getBillVideoExact(amount){
+
+  for(const code in DREAM_BILL_QR){
+
+    const bill = DREAM_BILL_QR[code];
+
+    if(bill.amount === amount){
+
+      return {
+        url: 'https://qrco.de/' + code,
+        label: bill.label,
+        amount: bill.amount
+      };
+
+    }
+
+  }
+
+  return null;
+
+}
+
 // 親がQR入金を承認 → ここで初めて残高に反映
 function approveQrDeposit(button, label, amount){
 
   depositFromQr(amount, label);
 
-  button.parentElement.remove();
+  button.closest('.approval-card').remove();
 
   saveData();
 
-  alert(label + '（' + amount + ' Dream円）を入金しました！');
+  const bill =
+    findBillByAmount(amount);
+
+  if(bill && bill.videoUrl){
+
+    const watchVideo = confirm(
+      label + '（' + amount + ' Dream円）を入金しました！🎉\n\n' +
+      bill.icon + ' ' + bill.label + ' のとくべつ動画をみる？'
+    );
+
+    if(watchVideo){
+      window.open(bill.videoUrl, '_blank');
+    }
+
+  }else{
+
+    alert(label + '（' + amount + ' Dream円）を入金しました！🎉');
+
+  }
 
 }
 

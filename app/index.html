@@ -241,11 +241,50 @@
 </section>
 
 <section id="qr-screen" class="screen">
-  <h1>📷 QRスキャン</h1>
+  <h1>💴 にゅうきん</h1>
 
-  <p class="sub-title">Dream紙幣のQRコードをよみとって入金！</p>
+  <p class="sub-title">もらったおさつをえらんでにゅうきん！</p>
 
   <div class="card">
+    <h2>📷 おさつをカメラにうつす</h2>
+    <p>おさつの まんなかのマーク を わくのなかにうつしてね</p>
+
+    <div style="position:relative;">
+      <video
+        id="billcam-video"
+        playsinline
+        style="width:100%; border-radius:16px; display:none;"
+      ></video>
+      <div id="billcam-frame" class="billcam-frame-square"></div>
+    </div>
+
+    <canvas id="billcam-canvas" style="display:none;"></canvas>
+
+    <p id="billcam-status">「おさつをうつす」をおしてカメラをきどうしてね</p>
+
+    <button id="billcam-start-btn" onclick="startBillCam()">
+      📷 おさつをうつす
+    </button>
+
+    <button
+      id="billcam-stop-btn"
+      class="sub-btn"
+      onclick="stopBillCam()"
+      style="display:none;"
+    >
+      とじる
+    </button>
+  </div>
+
+  <div class="card">
+    <h2>てでえらぶ</h2>
+    <p>うまくうつらないときは、ここからえらんでね</p>
+    <div id="bill-picker" class="child-list"></div>
+  </div>
+
+  <div class="card">
+
+    <h2>📷 QRスキャン（QRつきの紙幣用）</h2>
 
     <video
       id="qr-video"
@@ -287,6 +326,12 @@
       スキャンでよみとれないときは「しゃしんでよみとる」をためしてね
     </p>
 
+  </div>
+
+  <div class="card">
+    <h2>🎬 どうがライブラリ</h2>
+    <p>QRがよみとれないときは、ここから紙幣をえらんで動画がみられるよ</p>
+    <div id="video-library" class="child-list"></div>
   </div>
 
 </section>
@@ -533,7 +578,7 @@ window.dispatchEvent(new Event('firebase-ready'));
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
-<script src="script.js?v=18"></script>
+<script src="script.js?v=23"></script>
 
 </body>
 </html>
