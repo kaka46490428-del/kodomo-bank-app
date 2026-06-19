@@ -1873,86 +1873,62 @@ function calculateExchange(){
 // videoUrl：YouTubeにアップロードしたらここにURLを入れるだけで
 // どうがライブラリ・承認時のごほうび動画すべてに反映されます
 const DREAM_BILLS = [
-  { amount: 1,      icon: '🐰', label: '1円札（うさぎ）',                videoUrl: '' },
-  { amount: 5,      icon: '🐿️', label: '5円札（りす）',                 videoUrl: '' },
-  { amount: 10,     icon: '🏡', label: '10円札（おうち）',              videoUrl: '' },
-  { amount: 50,     icon: '🐧', label: '50円札（ペンギン）',            videoUrl: '' },
-  { amount: 100,    icon: '🐱', label: '100円札（ねこ）',               videoUrl: '' },
-  { amount: 500,    icon: '🌻', label: '500円札（ひまわり）',           videoUrl: '' },
-  { amount: 1000,   icon: '🗻', label: '1000円札（ふじさん）',          videoUrl: '' },
-  { amount: 5000,   icon: '🎡', label: '5000円札（かんらんしゃ）',      videoUrl: '' },
-  { amount: 10000,  icon: '🏰', label: '10000円札（おしろ）',           videoUrl: '' },
-  { amount: 100000, icon: '🐉', label: 'ひみつの壱拾万円札（ドラゴン）✨', videoUrl: '' }
+  { amount: 1,      icon: '🐰', label: '1円札（真田幸村・六文銭）',          videoUrl: '' },
+  { amount: 5,      icon: '🐿️', label: '5円札（織田信長・織田木瓜）',        videoUrl: '' },
+  { amount: 10,     icon: '🏡', label: '10円札（島津義弘・丸に十字）',       videoUrl: '' },
+  { amount: 50,     icon: '🐧', label: '50円札（上杉謙信・竹に雀）',         videoUrl: '' },
+  { amount: 100,    icon: '🐱', label: '100円札（明智光秀・桔梗）',          videoUrl: '' },
+  { amount: 500,    icon: '🌻', label: '500円札（豊臣秀吉・五七桐）',        videoUrl: '' },
+  { amount: 1000,   icon: '🗻', label: '1000円札（徳川家康・三つ葉葵）',     videoUrl: '' },
+  { amount: 5000,   icon: '🎡', label: '5000円札（武田信玄・武田菱）',       videoUrl: '' },
+  { amount: 10000,  icon: '🏰', label: '10000円札（毛利元就・一文字三星）✨', videoUrl: '' },
+  { amount: 100000, icon: '🐉', label: 'ひみつの壱拾万円札（直江兼続・九曜紋）✨', videoUrl: '' }
 ];
 
 // ============================================
-// おさつ画面認証（中央パッチ・3色ストライプ方式）
-// 紙幣中央の円に置いた3本の色帯で金額を判定
+// おさつ画面認証（家紋の色＋形のハイブリッド方式）
+// 紙幣中央の家紋パッチの「色」で判定し、
+// 色が近いペア（5000円と10000円）は「形」で最終判定
 // QR不要・外部サービス不要・期限なし
 // ============================================
 
-// 基本5色（はっきり区別できる色相）
-const PATCH_BASE_COLORS = {
-  R: 0,    // 赤
-  Y: 55,   // 黄
-  G: 120,  // 緑
-  B: 225,  // 青
-  P: 280   // 紫
-};
-
-// 各紙幣の3色パターン（左・中・右）
-const BILL_PATCH_PATTERNS = [
-  { amount: 1,      pattern: ['G','G','G'] },
-  { amount: 5,      pattern: ['Y','Y','Y'] },
-  { amount: 10,     pattern: ['R','R','R'] },
-  { amount: 50,     pattern: ['B','B','B'] },
-  { amount: 100,    pattern: ['P','P','P'] },
-  { amount: 500,    pattern: ['Y','R','Y'] },
-  { amount: 1000,   pattern: ['B','G','B'] },
-  { amount: 5000,   pattern: ['P','R','P'] },
-  { amount: 10000,  pattern: ['G','P','G'] },
-  { amount: 100000, pattern: ['R','P','B'] }
+// 各紙幣の代表色相（度）。実際の紙幣デザインから測定
+// dark:true は黒地に金（直江・壱拾万円）で、暗さで判定
+const BILL_HUE_PROFILES = [
+  { amount: 1,      hue: 2,   dark: false },  // 真田・赤
+  { amount: 5,      hue: 23,  dark: false },  // 織田・橙
+  { amount: 10,     hue: 48,  dark: false },  // 島津・黄
+  { amount: 50,     hue: 93,  dark: false },  // 上杉・黄緑
+  { amount: 100,    hue: 123, dark: false },  // 明智・緑
+  { amount: 500,    hue: 183, dark: false },  // 豊臣・水色
+  { amount: 1000,   hue: 223, dark: false },  // 徳川・青
+  { amount: 5000,   hue: 313, dark: false },  // 武田・青紫（10000と色近い→形で判定）
+  { amount: 10000,  hue: 328, dark: false },  // 毛利・桃（5000と色近い→形で判定）
+  { amount: 100000, hue: 43,  dark: true  }   // 直江・黒地金
 ];
 
-// 色相を基本色コード(R/Y/G/B/P)に分類。彩度が低すぎる=無色はnull
-function hueToBaseCode(h, s, v){
+// 色が近く形での最終判定が必要なペア
+const SHAPE_CHECK_PAIR = [5000, 10000];
+// 家紋の白い面積比のしきい値（武田菱=大, 毛利=小）。境界=0.35
+const SHAPE_AREA_THRESHOLD = 0.35;
 
-  if(s < 0.3 || v < 0.25){
-    return null;
-  }
+// パッチ領域の「代表色相・彩度・明度・暗部率」を測定
+function measurePatch(data, w, cx, cy, rad){
 
-  let bestCode = null;
-  let bestDiff = 999;
+  let sumX = 0, sumY = 0; // 色相を平均（円環なのでベクトル平均）
+  let coloredCount = 0;
+  let darkCount = 0;
+  let total = 0;
 
-  for(const code in PATCH_BASE_COLORS){
+  const r2 = rad * rad;
 
-    const target = PATCH_BASE_COLORS[code];
+  for(let y = cy - rad; y < cy + rad; y += 2){
+    for(let x = cx - rad; x < cx + rad; x += 2){
 
-    let diff = Math.abs(h - target);
-    if(diff > 180) diff = 360 - diff;
-
-    if(diff < bestDiff){
-      bestDiff = diff;
-      bestCode = code;
-    }
-
-  }
-
-  // 最寄りの基本色から36度以内のときだけ採用
-  return bestDiff <= 36 ? bestCode : null;
-
-}
-
-// 1つの帯領域の代表色コードを多数決で求める
-function dominantCodeOfRegion(data, w, x1, x2, y1, y2){
-
-  const counts = { R:0, Y:0, G:0, B:0, P:0 };
-
-  for(let y = y1; y < y2; y += 2){
-    for(let x = x1; x < x2; x += 2){
+      const dx = x - cx, dy = y - cy;
+      if(dx*dx + dy*dy > r2) continue;
 
       const i = (y * w + x) * 4;
-
       const r = data[i] / 255;
       const g = data[i + 1] / 255;
       const b = data[i + 2] / 255;
@@ -1962,49 +1938,75 @@ function dominantCodeOfRegion(data, w, x1, x2, y1, y2){
       const v = max;
       const s = max === 0 ? 0 : (max - min) / max;
 
-      let h = 0;
-      const d = max - min;
+      total++;
+      if(v < 0.3) darkCount++;
 
-      if(d > 0){
-        if(max === r){
-          h = 60 * (((g - b) / d) % 6);
-        }else if(max === g){
-          h = 60 * ((b - r) / d + 2);
-        }else{
-          h = 60 * ((r - g) / d + 4);
+      if(s > 0.3 && v > 0.3){
+        let h = 0;
+        const d = max - min;
+        if(d > 0){
+          if(max === r)      h = 60 * (((g - b) / d) % 6);
+          else if(max === g) h = 60 * ((b - r) / d + 2);
+          else               h = 60 * ((r - g) / d + 4);
         }
+        if(h < 0) h += 360;
+        const rad_h = h * Math.PI / 180;
+        sumX += Math.cos(rad_h);
+        sumY += Math.sin(rad_h);
+        coloredCount++;
       }
-
-      if(h < 0) h += 360;
-
-      const code = hueToBaseCode(h, s, v);
-
-      if(code){
-        counts[code]++;
-      }
-
     }
   }
 
-  let best = null;
-  let bestCount = 0;
+  if(total === 0) return null;
+
+  let domHue = null;
+  if(coloredCount > 5){
+    domHue = Math.atan2(sumY, sumX) * 180 / Math.PI;
+    if(domHue < 0) domHue += 360;
+  }
+
+  return {
+    hue: domHue,
+    coloredRatio: coloredCount / total,
+    darkRatio: darkCount / total
+  };
+}
+
+// 家紋（白っぽい部分）の面積比を測る＝形の判定用
+function measureMonAreaRatio(data, w, cx, cy, rad){
+
+  let monCount = 0;
   let total = 0;
+  const r2 = rad * rad;
 
-  for(const code in counts){
-    total += counts[code];
-    if(counts[code] > bestCount){
-      bestCount = counts[code];
-      best = code;
+  for(let y = cy - rad; y < cy + rad; y += 2){
+    for(let x = cx - rad; x < cx + rad; x += 2){
+      const dx = x - cx, dy = y - cy;
+      if(dx*dx + dy*dy > r2) continue;
+
+      const i = (y * w + x) * 4;
+      const r = data[i] / 255;
+      const g = data[i + 1] / 255;
+      const b = data[i + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const v = max;
+      const s = max === 0 ? 0 : (max - min) / max;
+
+      total++;
+      // 白っぽい（低彩度・高明度）＝家紋マーク部分
+      if(s < 0.35 && v > 0.55) monCount++;
     }
   }
+  return total > 0 ? monCount / total : 0;
+}
 
-  // その帯の過半数が同じ色でなければ無効
-  if(total < 5 || bestCount < total * 0.5){
-    return null;
-  }
-
-  return best;
-
+// 色相の差（円環）
+function hueDiff(a, b){
+  let d = Math.abs(a - b);
+  if(d > 180) d = 360 - d;
+  return d;
 }
 
 // 連続フレームの投票
@@ -2019,8 +2021,8 @@ function recognizeBillFrame(video, canvas){
     return null;
   }
 
-  // 中央の正方形エリア（パッチを映す枠）を切り出す
-  const size = Math.min(vw, vh) * 0.5;
+  // 中央の正方形エリア（家紋パッチを映す枠）を切り出す
+  const size = Math.min(vw, vh) * 0.55;
   const sx = (vw - size) / 2;
   const sy = (vh - size) / 2;
 
@@ -2028,40 +2030,54 @@ function recognizeBillFrame(video, canvas){
   canvas.height = 150;
 
   const ctx = canvas.getContext('2d');
-
   ctx.drawImage(video, sx, sy, size, size, 0, 0, 150, 150);
 
-  const data =
-    ctx.getImageData(0, 0, 150, 150).data;
+  const data = ctx.getImageData(0, 0, 150, 150).data;
 
-  // 中央の縦60%・横を3等分して各帯の色を読む
-  const y1 = Math.floor(150 * 0.2);
-  const y2 = Math.floor(150 * 0.8);
+  // 中央の円（家紋パッチ）を測定
+  const m = measurePatch(data, 150, 75, 75, 52);
 
-  const left   = dominantCodeOfRegion(data, 150, 10,  45,  y1, y2);
-  const center = dominantCodeOfRegion(data, 150, 58,  92,  y1, y2);
-  const right  = dominantCodeOfRegion(data, 150, 105, 140, y1, y2);
-
-  if(!left || !center || !right){
+  if(!m){
     billVotes = [];
     return null;
   }
 
-  // パターン一致を探す
+  // 紙幣がほぼ映っていない（色も暗部も乏しい）場合はスキップ
+  if(m.coloredRatio < 0.15 && m.darkRatio < 0.4){
+    billVotes = [];
+    return null;
+  }
+
+  // --- ステップ1：色で候補を絞る ---
   let matched = null;
 
-  for(const bp of BILL_PATCH_PATTERNS){
-    if(bp.pattern[0] === left &&
-       bp.pattern[1] === center &&
-       bp.pattern[2] === right){
-      matched = bp.amount;
-      break;
+  // 黒地金（直江）は暗部率が高いことで判定
+  if(m.darkRatio > 0.4){
+    matched = 100000;
+  }else if(m.hue !== null){
+    // 最も色相が近い紙幣を選ぶ
+    let best = null, bestDiff = 999;
+    for(const p of BILL_HUE_PROFILES){
+      if(p.dark) continue;
+      const d = hueDiff(m.hue, p.hue);
+      if(d < bestDiff){ bestDiff = d; best = p; }
+    }
+    // 近い色相（25度以内）でなければ無効
+    if(best && bestDiff <= 25){
+      matched = best.amount;
     }
   }
 
   if(matched === null){
     billVotes = [];
     return null;
+  }
+
+  // --- ステップ2：色が近いペアは形で最終判定 ---
+  if(SHAPE_CHECK_PAIR.includes(matched)){
+    const areaRatio = measureMonAreaRatio(data, 150, 75, 75, 52);
+    // 面積比が大きい＝武田菱(5000)、小さい＝毛利(10000)
+    matched = areaRatio >= SHAPE_AREA_THRESHOLD ? 5000 : 10000;
   }
 
   // 投票（直近5回一致で確定）
