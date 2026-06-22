@@ -4,13 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dream Bank</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+  <!-- ログイン画面 -->
+  <section id="login-screen" class="screen active">
+    <h1>Dream Bank ログイン</h1>
+
+    <p>
+      開発中のため、ログインできるユーザーのみ利用できます。
+    </p>
+
+    <input id="login-email" type="email" placeholder="メールアドレス">
+    <input id="login-password" type="password" placeholder="パスワード">
+
+    <button onclick="loginUser()">ログイン</button>
+
+    <p id="login-message" style="color:red;"></p>
+  </section>
+
   <!-- プライバシー案内 -->
-  <section id="privacy-screen" class="screen active">
+  <section id="privacy-screen" class="screen">
     <h1>Dream Bankへようこそ</h1>
 
     <p>
@@ -26,11 +42,14 @@
     <button onclick="showScreen('join-screen')">
       招待コードで参加
     </button>
+
+    <button class="sub-btn" onclick="logoutUser()">
+      ログアウト
+    </button>
   </section>
 
   <!-- 招待コードで参加 -->
   <section id="join-screen" class="screen">
-
     <h1>招待コードで参加</h1>
 
     <p>
@@ -48,37 +67,23 @@
       style="text-transform: uppercase;"
     >
 
-    <button onclick="joinFamily()">
-      参加する
-    </button>
-
-    <button onclick="showScreen('privacy-screen')">
-      もどる
-    </button>
-
+    <button onclick="joinFamily()">参加する</button>
+    <button onclick="showScreen('privacy-screen')">もどる</button>
   </section>
 
   <!-- 子供銀行作成 -->
   <section id="family-screen" class="screen">
-
     <h1>子供銀行作成</h1>
 
     <input id="family-name-input" type="text" placeholder="家族名">
     <input id="bank-name-input" type="text" placeholder="銀行名">
 
-    <button onclick="createFamily()">
-      次へ
-    </button>
-
-    <button onclick="showScreen('privacy-screen')">
-      もどる
-    </button>
-
+    <button onclick="createFamily()">次へ</button>
+    <button onclick="showScreen('privacy-screen')">もどる</button>
   </section>
 
   <!-- 個人通帳作成 -->
   <section id="child-screen" class="screen">
-
     <h1>個人通帳作成</h1>
 
     <input id="first-child-name-input" type="text" placeholder="名前">
@@ -90,15 +95,11 @@
       <option>ペンギン</option>
     </select>
 
-    <button onclick="createFirstChild()">
-      通帳を作成
-    </button>
-
+    <button onclick="createFirstChild()">通帳を作成</button>
   </section>
 
   <!-- ホーム画面 -->
   <section id="home-screen" class="screen">
-
     <h1>Dream Bank</h1>
 
     <div class="card">
@@ -107,478 +108,460 @@
     </div>
 
     <div class="menu-grid">
-
-  <button onclick="showScreen('passbook-screen')">通帳</button>
-  <button onclick="showScreen('goal-screen')">目標</button>
-  <button onclick="showScreen('mission-screen')">おしごと</button>
-  <button onclick="showScreen('qr-screen')">QR</button>
-  <button onclick="showScreen('exchange-screen')">為替</button>
-  <button onclick="showScreen('setting-screen')">設定</button>
-
+      <button onclick="showScreen('passbook-screen')">通帳</button>
+      <button onclick="showScreen('goal-screen')">目標</button>
+      <button onclick="showScreen('mission-screen')">おしごと</button>
+      <button onclick="showScreen('qr-screen')">QR</button>
+      <button onclick="showScreen('exchange-screen')">為替</button>
+      <button onclick="showScreen('setting-screen')">設定</button>
     </div>
-
   </section>
-  
- <section id="passbook-screen" class="screen">
 
-  <h1>📖 通帳</h1>
+  <!-- 通帳 -->
+  <section id="passbook-screen" class="screen">
+    <h1>📖 通帳</h1>
 
-  <p class="sub-title">
-    今日もコツコツがんばろう！
-  </p>
+    <p class="sub-title">今日もコツコツがんばろう！</p>
 
-  <div class="balance-card">
-    <div>
-      <div class="balance-label">現在の残高</div>
-      <div id="balance" class="balance">
-        650 Dream円
+    <div class="balance-card">
+      <div>
+        <div class="balance-label">現在の残高</div>
+        <div id="balance" class="balance">650 Dream円</div>
+      </div>
+
+      <div class="rank-badge">Bronze</div>
+    </div>
+
+    <div class="transaction-card">
+      <h2>取引を追加</h2>
+
+      <input
+        id="trade-title"
+        type="text"
+        inputmode="kana"
+        autocomplete="off"
+        placeholder="内容を入力"
+        oninput="convertTradeTitleToHiragana()"
+      >
+
+      <input id="trade-amount" type="number" placeholder="金額を入力">
+
+      <div class="trade-buttons">
+        <button class="income-btn" onclick="addTransaction('income')">入金</button>
+        <button class="expense-btn" onclick="addTransaction('expense')">出金</button>
       </div>
     </div>
 
-    <div class="rank-badge">
-      Bronze
+    <div class="passbook-area">
+      <div class="passbook-title">Dream Bank PASSBOOK</div>
+
+      <div class="passbook-header">
+        <div>年月日</div>
+        <div>お取引内容</div>
+        <div>金額</div>
+      </div>
+
+      <div id="transaction-list">
+        <div class="passbook-row income">
+          <div>5/22</div>
+          <div>🧹 トイレそうじ</div>
+          <div>+100円</div>
+        </div>
+
+        <div class="passbook-row expense">
+          <div>5/20</div>
+          <div>🍩 おかし</div>
+          <div>-150円</div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="transaction-card">
+  <!-- 目標 -->
+  <section id="goal-screen" class="screen">
+    <h1>🎯 目標</h1>
 
-    <h2>取引を追加</h2>
+    <div class="goal-world">
+      <div id="goal-stage-icon" class="goal-icon">🌱</div>
+      <h2 id="goal-stage-title">芽が出たよ！</h2>
+      <p id="goal-message">コツコツ貯めて世界を育てよう</p>
+    </div>
 
-    <input
-      id="trade-title"
-      type="text"
-      inputmode="kana"
-      autocomplete="off"
-      placeholder="内容を入力"
-      oninput="convertTradeTitleToHiragana()"
-    >
+    <div class="card">
+      <h2>目標金額</h2>
+      <p>
+        <span id="goal-current">1000</span> /
+        <span id="goal-target">10000</span> Dream円
+      </p>
 
-    <input
-      id="trade-amount"
-      type="number"
-      placeholder="金額を入力"
-    >
+      <div class="progress-bar">
+        <div id="goal-progress" class="progress-fill"></div>
+      </div>
 
-    <div class="trade-buttons">
-      <button
-        class="income-btn"
-        onclick="addTransaction('income')"
-      >
-        入金
+      <p id="goal-remaining">あと9000 Dream円で次の成長！</p>
+    </div>
+  </section>
+
+  <!-- おしごと -->
+  <section id="mission-screen" class="screen">
+    <h1>🧹 おしごと</h1>
+    <div id="mission-list"></div>
+  </section>
+
+  <!-- QR -->
+  <section id="qr-screen" class="screen">
+    <h1>💴 にゅうきん</h1>
+
+    <p class="sub-title">もらったおさつをえらんでにゅうきん！</p>
+
+    <div class="card">
+      <h2>📷 おさつをカメラにうつす</h2>
+      <p>おさつの まんなかのマーク を わくのなかにうつしてね</p>
+
+      <div style="position:relative;">
+        <video
+          id="billcam-video"
+          playsinline
+          style="width:100%; border-radius:16px; display:none;"
+        ></video>
+        <div id="billcam-frame" class="billcam-frame-square"></div>
+      </div>
+
+      <canvas id="billcam-canvas" style="display:none;"></canvas>
+
+      <p id="billcam-status">「おさつをうつす」をおしてカメラをきどうしてね</p>
+
+      <button id="billcam-start-btn" onclick="startBillCam()">
+        📷 おさつをうつす
       </button>
 
       <button
-        class="expense-btn"
-        onclick="addTransaction('expense')"
+        id="billcam-stop-btn"
+        class="sub-btn"
+        onclick="stopBillCam()"
+        style="display:none;"
       >
-        出金
+        とじる
       </button>
     </div>
 
-  </div>
-
-  <div class="passbook-area">
-
-    <div class="passbook-title">
-      Dream Bank PASSBOOK
+    <div class="card">
+      <h2>てでえらぶ</h2>
+      <p>うまくうつらないときは、ここからえらんでね</p>
+      <div id="bill-picker" class="child-list"></div>
     </div>
 
-    <div class="passbook-header">
-      <div>年月日</div>
-      <div>お取引内容</div>
-      <div>金額</div>
-    </div>
+    <div class="card">
+      <h2>📷 QRスキャン（QRつきの紙幣用）</h2>
 
-    <div id="transaction-list">
-
-      <div class="passbook-row income">
-        <div>5/22</div>
-        <div>🧹 トイレそうじ</div>
-        <div>+100円</div>
-      </div>
-
-      <div class="passbook-row expense">
-        <div>5/20</div>
-        <div>🍩 おかし</div>
-        <div>-150円</div>
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-<section id="goal-screen" class="screen">
-  <h1>🎯 目標</h1>
-
-  <div class="goal-world">
-    <div id="goal-stage-icon" class="goal-icon">🌱</div>
-    <h2 id="goal-stage-title">芽が出たよ！</h2>
-    <p id="goal-message">コツコツ貯めて世界を育てよう</p>
-  </div>
-
-  <div class="card">
-    <h2>目標金額</h2>
-    <p><span id="goal-current">1000</span> / <span id="goal-target">10000</span> Dream円</p>
-
-    <div class="progress-bar">
-      <div id="goal-progress" class="progress-fill"></div>
-    </div>
-
-    <p id="goal-remaining">あと9000 Dream円で次の成長！</p>
-  </div>
-</section>
-
-<section id="mission-screen" class="screen">
-
-  <h1>🧹 おしごと</h1>
-
-  <div id="mission-list">
-
-  </div>
-
-</section>
-
-<section id="qr-screen" class="screen">
-  <h1>💴 にゅうきん</h1>
-
-  <p class="sub-title">もらったおさつをえらんでにゅうきん！</p>
-
-  <div class="card">
-    <h2>📷 おさつをカメラにうつす</h2>
-    <p>おさつの まんなかのマーク を わくのなかにうつしてね</p>
-
-    <div style="position:relative;">
       <video
-        id="billcam-video"
+        id="qr-video"
         playsinline
         style="width:100%; border-radius:16px; display:none;"
       ></video>
-      <div id="billcam-frame" class="billcam-frame-square"></div>
+
+      <canvas id="qr-canvas" style="display:none;"></canvas>
+
+      <p id="qr-status">「スキャンかいし」をおしてカメラをきどうしてね</p>
+
+      <button id="qr-start-btn" onclick="startQrScan()">
+        スキャンかいし
+      </button>
+
+      <button
+        id="qr-stop-btn"
+        class="sub-btn"
+        onclick="stopQrScan()"
+        style="display:none;"
+      >
+        スキャンていし
+      </button>
+
+      <input
+        id="qr-photo-input"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style="display:none;"
+        onchange="scanQrFromPhoto(this)"
+      >
+
+      <button onclick="document.getElementById('qr-photo-input').click()">
+        📸 しゃしんでよみとる
+      </button>
+
+      <p style="font-size:13px; color:#888;">
+        スキャンでよみとれないときは「しゃしんでよみとる」をためしてね
+      </p>
     </div>
 
-    <canvas id="billcam-canvas" style="display:none;"></canvas>
+    <div class="card">
+      <h2>🎬 どうがライブラリ</h2>
+      <p>QRがよみとれないときは、ここから紙幣をえらんで動画がみられるよ</p>
+      <div id="video-library" class="child-list"></div>
+    </div>
+  </section>
 
-    <p id="billcam-status">「おさつをうつす」をおしてカメラをきどうしてね</p>
+  <!-- 為替 -->
+  <section id="exchange-screen" class="screen">
+    <h1>💱 為替</h1>
 
-    <button id="billcam-start-btn" onclick="startBillCam()">
-      📷 おさつをうつす
-    </button>
+    <p class="sub-title">せかいのお金とくらべてみよう！</p>
 
-    <button
-      id="billcam-stop-btn"
-      class="sub-btn"
-      onclick="stopBillCam()"
-      style="display:none;"
-    >
-      とじる
-    </button>
-  </div>
+    <div class="card">
+      <p id="exchange-updated">レートを読み込み中...</p>
 
-  <div class="card">
-    <h2>てでえらぶ</h2>
-    <p>うまくうつらないときは、ここからえらんでね</p>
-    <div id="bill-picker" class="child-list"></div>
-  </div>
+      <div id="exchange-list">
+        <p>🇺🇸 USD 米ドル：--- 円</p>
+        <p>🇪🇺 EUR ユーロ：--- 円</p>
+        <p>🇬🇧 GBP ポンド：--- 円</p>
+        <p>🇯🇵 JPY 日本円：1円</p>
+      </div>
 
-  <div class="card">
-
-    <h2>📷 QRスキャン（QRつきの紙幣用）</h2>
-
-    <video
-      id="qr-video"
-      playsinline
-      style="width:100%; border-radius:16px; display:none;"
-    ></video>
-
-    <canvas id="qr-canvas" style="display:none;"></canvas>
-
-    <p id="qr-status">「スキャンかいし」をおしてカメラをきどうしてね</p>
-
-    <button id="qr-start-btn" onclick="startQrScan()">
-      スキャンかいし
-    </button>
-
-    <button
-      id="qr-stop-btn"
-      class="sub-btn"
-      onclick="stopQrScan()"
-      style="display:none;"
-    >
-      スキャンていし
-    </button>
-
-    <input
-      id="qr-photo-input"
-      type="file"
-      accept="image/*"
-      capture="environment"
-      style="display:none;"
-      onchange="scanQrFromPhoto(this)"
-    >
-
-    <button onclick="document.getElementById('qr-photo-input').click()">
-      📸 しゃしんでよみとる
-    </button>
-
-    <p style="font-size:13px; color:#888;">
-      スキャンでよみとれないときは「しゃしんでよみとる」をためしてね
-    </p>
-
-  </div>
-
-  <div class="card">
-    <h2>🎬 どうがライブラリ</h2>
-    <p>QRがよみとれないときは、ここから紙幣をえらんで動画がみられるよ</p>
-    <div id="video-library" class="child-list"></div>
-  </div>
-
-</section>
-
-<section id="exchange-screen" class="screen">
-  <h1>💱 為替</h1>
-
-  <p class="sub-title">せかいのお金とくらべてみよう！</p>
-
-  <div class="card">
-    <p id="exchange-updated">レートを読み込み中...</p>
-
-    <div id="exchange-list">
-      <p>🇺🇸 USD 米ドル：--- 円</p>
-      <p>🇪🇺 EUR ユーロ：--- 円</p>
-      <p>🇬🇧 GBP ポンド：--- 円</p>
-      <p>🇯🇵 JPY 日本円：1円</p>
+      <button onclick="loadExchangeRates()">
+        さいしんのレートにこうしん
+      </button>
     </div>
 
-    <button onclick="loadExchangeRates()">
-      さいしんのレートにこうしん
+    <div class="card">
+      <h2>りょうがえ けいさん</h2>
+      <p>Dream円をがいこくのお金にすると？</p>
+
+      <input id="exchange-amount" type="number" placeholder="Dream円を入力">
+
+      <select id="exchange-currency">
+        <option value="USD">🇺🇸 米ドル（USD）</option>
+        <option value="EUR">🇪🇺 ユーロ（EUR）</option>
+        <option value="GBP">🇬🇧 ポンド（GBP）</option>
+      </select>
+
+      <button onclick="calculateExchange()">けいさんする</button>
+
+      <p id="exchange-result" class="balance"></p>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="setting-screen" class="screen">
+    <h1>設定</h1>
+
+    <div class="card">
+      <h2>家族情報</h2>
+      <p id="setting-family-name">家族名：未設定</p>
+      <p id="setting-bank-name">銀行名：未設定</p>
+
+      <h2>招待コード</h2>
+      <p id="setting-invite-code" class="balance">------</p>
+      <p>家族のスマホやPCで「招待コードで参加」からこのコードを入力すると、同じ銀行に接続できます</p>
+
+      <button onclick="copyInviteCode()">コードをコピー</button>
+      <button onclick="leaveFamily()">この端末の接続を解除</button>
+    </div>
+
+    <div class="card">
+      <h2>管理者メニュー</h2>
+      <p>おしごとの追加・報酬変更・削除ができます（親モード専用）</p>
+
+      <button onclick="openAdminScreen()">管理者画面を開く</button>
+
+      <h2>親用暗証番号（PIN）</h2>
+      <p id="pin-status">未設定</p>
+      <p>設定すると、管理者画面と親モードへの切替に4桁の暗証番号が必要になります</p>
+
+      <button onclick="setParentPin()">暗証番号を設定・変更</button>
+    </div>
+
+    <div class="card">
+      <h2>入力モード</h2>
+
+      <div class="card">
+        <h2>子供の通帳</h2>
+
+        <input
+          id="child-name-input"
+          type="text"
+          placeholder="こどもの名前を入力"
+        >
+
+        <button onclick="addChildAccount()">通帳を追加</button>
+
+        <div id="child-list" class="child-list"></div>
+      </div>
+
+      <select id="input-mode" onchange="changeInputMode()">
+        <option value="kana">子供モード（ひらがな）</option>
+        <option value="normal">親モード（通常）</option>
+      </select>
+
+      <button class="sub-btn" onclick="logoutUser()">ログアウト</button>
+    </div>
+  </section>
+
+  <!-- 管理者画面 -->
+  <section id="admin-screen" class="screen">
+    <h1>🛠 管理者画面</h1>
+
+    <p class="sub-title">おしごとの管理（親モード専用）</p>
+
+    <div class="card">
+      <h2>おしごと追加</h2>
+
+      <input id="mission-name-input" type="text" placeholder="おしごと名">
+      <input id="mission-reward-input" type="number" placeholder="報酬（Dream円）">
+
+      <button onclick="addMission()">おしごと追加</button>
+    </div>
+
+    <h2>登録済みのおしごと</h2>
+
+    <div id="admin-mission-list"></div>
+
+    <div class="card">
+      <h2>Dream紙幣QRの作成</h2>
+      <p>金額を入力すると、アプリで読み取れるQRコードを作れます。印刷して紙幣に貼ってください</p>
+
+      <input id="qr-make-amount" type="number" placeholder="金額（Dream円）">
+
+      <button onclick="makeQrBill()">QRコードを作成</button>
+
+      <div id="qr-bill-area" style="margin-top:14px;"></div>
+    </div>
+
+    <button class="sub-btn" onclick="showScreen('setting-screen')">
+      設定にもどる
     </button>
-  </div>
+  </section>
 
-  <div class="card">
-    <h2>りょうがえ けいさん</h2>
-    <p>Dream円をがいこくのお金にすると？</p>
+  <!-- 承認画面 -->
+  <section id="approval-screen" class="screen">
+    <h1>✅ 承認待ち</h1>
+    <div id="approval-list"></div>
+  </section>
 
-    <input
-      id="exchange-amount"
-      type="number"
-      placeholder="Dream円を入力"
-    >
+  <!-- 下部ナビ -->
+  <nav class="bottom-nav" style="display:none;">
+    <button onclick="showScreen('home-screen')">🏠<br>ホーム</button>
+    <button onclick="showScreen('passbook-screen')">📖<br>通帳</button>
+    <button onclick="showScreen('goal-screen')">🎯<br>目標</button>
+    <button onclick="showScreen('mission-screen')">🧹<br>おしごと</button>
+    <button onclick="showScreen('exchange-screen')">💱<br>為替</button>
+    <button onclick="showScreen('setting-screen')">⚙️<br>設定</button>
+    <button onclick="showScreen('approval-screen')">✅<br>承認</button>
+  </nav>
 
-    <select id="exchange-currency">
-      <option value="USD">🇺🇸 米ドル（USD）</option>
-      <option value="EUR">🇪🇺 ユーロ（EUR）</option>
-      <option value="GBP">🇬🇧 ポンド（GBP）</option>
-    </select>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
-    <button onclick="calculateExchange()">
-      けいさんする
-    </button>
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
-    <p id="exchange-result" class="balance"></p>
-  </div>
-</section>
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      onSnapshot,
+      collection,
+      query,
+      where,
+      getDocs
+    }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-<section id="setting-screen" class="screen">
-  <h1>設定</h1>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuHBXeOhNTOdpncmkh_t92SdhlDDQkHvM",
+      authDomain: "kodomo-bank-app.firebaseapp.com",
+      projectId: "kodomo-bank-app",
+      storageBucket: "kodomo-bank-app.firebasestorage.app",
+      messagingSenderId: "190089087052",
+      appId: "1:190089087052:web:d9f1a31910f3f4614f8ce9"
+    };
 
-  <!-- 家族情報・招待コード -->
-  <div class="card">
-    <h2>家族情報</h2>
-    <p id="setting-family-name">家族名：未設定</p>
-    <p id="setting-bank-name">銀行名：未設定</p>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    <h2>招待コード</h2>
-    <p id="setting-invite-code" class="balance">------</p>
-    <p>家族のスマホやPCで「招待コードで参加」からこのコードを入力すると、同じ銀行に接続できます</p>
+    window.db = db;
+    window.auth = auth;
 
-    <button onclick="copyInviteCode()">
-      コードをコピー
-    </button>
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    window.onSnapshot = onSnapshot;
+    window.collection = collection;
+    window.query = query;
+    window.where = where;
+    window.getDocs = getDocs;
 
-    <button onclick="leaveFamily()">
-      この端末の接続を解除
-    </button>
-  </div>
+    window.loginUser = async function () {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const message = document.getElementById("login-message");
 
-  <!-- 管理者画面への入口 -->
-  <div class="card">
-    <h2>管理者メニュー</h2>
-    <p>おしごとの追加・報酬変更・削除ができます（親モード専用）</p>
-    <button onclick="openAdminScreen()">
-      管理者画面を開く
-    </button>
+      if (!email || !password) {
+        message.textContent = "メールアドレスとパスワードを入力してください。";
+        return;
+      }
 
-    <h2>親用暗証番号（PIN）</h2>
-    <p id="pin-status">未設定</p>
-    <p>設定すると、管理者画面と親モードへの切替に4桁の暗証番号が必要になります</p>
-    <button onclick="setParentPin()">
-      暗証番号を設定・変更
-    </button>
-  </div>
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        message.textContent = "";
+      } catch (error) {
+        message.textContent = "ログインに失敗しました。メールアドレスとパスワードを確認してください。";
+        console.error("Login error:", error);
+      }
+    };
 
-  <div class="card">
+    window.logoutUser = async function () {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    };
 
-  <h2>入力モード</h2>
+    onAuthStateChanged(auth, (user) => {
+      const nav = document.querySelector(".bottom-nav");
 
-  <div class="card">
-  <h2>子供の通帳</h2>
+      document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+      });
 
-  <input
-    id="child-name-input"
-    type="text"
-    placeholder="こどもの名前を入力"
-  >
+      if (user) {
+        console.log("ログイン中:", user.uid);
+        window.currentUser = user;
 
-  <button onclick="addChildAccount()">
-    通帳を追加
-  </button>
+        document.getElementById("privacy-screen").classList.add("active");
 
-  <div id="child-list" class="child-list">
-  </div>
-</div>
+        if (nav) {
+          nav.style.display = "flex";
+        }
 
-  <select id="input-mode" onchange="changeInputMode()">
-    <option value="kana">子供モード（ひらがな）</option>
-    <option value="normal">親モード（通常）</option>
-  </select>
+        window.dispatchEvent(new Event("firebase-ready"));
+      } else {
+        console.log("未ログイン");
+        window.currentUser = null;
 
-</div>
-</section>
+        document.getElementById("login-screen").classList.add("active");
 
-<section id="admin-screen" class="screen">
+        if (nav) {
+          nav.style.display = "none";
+        }
+      }
+    });
 
-  <h1>🛠 管理者画面</h1>
+    console.log("Firebase initialized!");
+  </script>
 
-  <p class="sub-title">おしごとの管理（親モード専用）</p>
-
-  <div class="card">
-    <h2>おしごと追加</h2>
-
-    <input
-      id="mission-name-input"
-      type="text"
-      placeholder="おしごと名"
-    >
-
-    <input
-      id="mission-reward-input"
-      type="number"
-      placeholder="報酬（Dream円）"
-    >
-
-    <button onclick="addMission()">
-      おしごと追加
-    </button>
-  </div>
-
-  <h2>登録済みのおしごと</h2>
-
-  <div id="admin-mission-list">
-  </div>
-
-  <div class="card">
-    <h2>Dream紙幣QRの作成</h2>
-    <p>金額を入力すると、アプリで読み取れるQRコードを作れます。印刷して紙幣に貼ってください</p>
-
-    <input
-      id="qr-make-amount"
-      type="number"
-      placeholder="金額（Dream円）"
-    >
-
-    <button onclick="makeQrBill()">
-      QRコードを作成
-    </button>
-
-    <div id="qr-bill-area" style="margin-top:14px;"></div>
-  </div>
-
-  <button class="sub-btn" onclick="showScreen('setting-screen')">
-    設定にもどる
-  </button>
-
-</section>
-
-<section id="approval-screen" class="screen">
-
-  <h1>✅ 承認待ち</h1>
-
-  <div id="approval-list">
-
-  </div>
-
-</section>
-
-  <nav class="bottom-nav">
-  <button onclick="showScreen('home-screen')">🏠<br>ホーム</button>
-  <button onclick="showScreen('passbook-screen')">📖<br>通帳</button>
-  <button onclick="showScreen('goal-screen')">🎯<br>目標</button>
-  <button onclick="showScreen('mission-screen')">🧹<br>おしごと</button>
-  <button onclick="showScreen('exchange-screen')">💱<br>為替</button>
-  <button onclick="showScreen('setting-screen')">⚙️<br>設定</button>
-  <button onclick="showScreen('approval-screen')">✅<br>承認</button>
-</nav>
-<script type="module">
-
-  import { initializeApp }
-  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    onSnapshot,
-    collection,
-    query,
-    where,
-    getDocs
-  }
-  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
-  // Firebase設定
-  const firebaseConfig = {
-
-    apiKey: "AIzaSyCuHBXeOhNTOdpncmkh_t92SdhlDDQkHvM",
-
-    authDomain: "kodomo-bank-app.firebaseapp.com",
-
-    projectId: "kodomo-bank-app",
-
-    storageBucket: "kodomo-bank-app.firebasestorage.app",
-
-    messagingSenderId: "190089087052",
-
-    appId: "1:190089087052:web:d9f1a31910f3f4614f8ce9"
-
-  };
-
-  // Firestore初期化
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// script.jsから使えるようにする
-window.db = db;
-window.doc = doc;
-window.setDoc = setDoc;
-window.getDoc = getDoc;
-window.onSnapshot = onSnapshot;
-window.collection = collection;
-window.query = query;
-window.where = where;
-window.getDocs = getDocs;
-
-console.log("Firestore connected!");
-
-window.dispatchEvent(new Event('firebase-ready'));
-
-</script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
-<script src="script.js?v=24"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="script.js?v=25"></script>
 
 </body>
 </html>
